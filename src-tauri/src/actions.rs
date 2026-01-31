@@ -705,7 +705,7 @@ impl ShortcutAction for TranscribeWithContextAction {
                         if !transcription.is_empty() {
                             let mut final_text = transcription.clone();
                             let mut post_processed_text: Option<String> = None;
-                            let mut post_process_prompt: Option<String> = context_prompt.clone();
+                            let post_process_prompt: Option<String> = context_prompt.clone();
 
                             if let Some(converted_text) =
                                 maybe_convert_chinese_variant(&settings, &transcription).await
