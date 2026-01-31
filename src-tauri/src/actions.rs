@@ -524,7 +524,7 @@ impl ShortcutAction for TranscribeAction {
                         if !transcription.is_empty() {
                             let mut final_text = transcription.clone();
                             let mut post_processed_text: Option<String> = None;
-                            let post_process_prompt: Option<String>;
+                            let mut post_process_prompt: Option<String> = None;
 
                             // First, check if Chinese variant conversion is needed
                             if let Some(converted_text) =
