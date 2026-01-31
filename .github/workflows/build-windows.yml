@@ -56,14 +56,16 @@ jobs:
           if ($conf.bundle.windows.PSObject.Properties['signCommand']) {
             $conf.bundle.windows.PSObject.Properties.Remove('signCommand')
           }
+          if ($conf.plugins.PSObject.Properties['updater']) {
+            $conf.plugins.PSObject.Properties.Remove('updater')
+          }
           $conf | ConvertTo-Json -Depth 20 | Set-Content src-tauri/tauri.conf.json
-          Write-Host "Removed signCommand from tauri.conf.json"
+          Write-Host "Removed signCommand and updater from tauri.conf.json"
 
       - name: Build with Tauri
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ""
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
