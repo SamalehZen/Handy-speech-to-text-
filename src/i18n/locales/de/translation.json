@@ -12,7 +12,8 @@
     "postProcessing": "Nachbearbeitung",
     "history": "Verlauf",
     "debug": "Debug",
-    "about": "Info"
+    "about": "Info",
+    "context": "Kontext"
   },
   "onboarding": {
     "subtitle": "Wähle ein Transkriptionsmodell, um loszulegen",
@@ -413,6 +414,7 @@
   },
   "common": {
     "loading": "Wird geladen...",
+    "saving": "Speichern...",
     "save": "Speichern",
     "cancel": "Abbrechen",
     "reset": "Zurücksetzen",

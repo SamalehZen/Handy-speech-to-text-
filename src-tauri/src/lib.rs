@@ -130,11 +130,24 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     let history_manager =
         Arc::new(HistoryManager::new(app_handle).expect("Failed to initialize history manager"));
 
+    // Initialize the browser bridge for context detection
+    let browser_bridge = Arc::new(tokio::sync::RwLock::new(
+        context_detection::browser_bridge::BrowserBridge::default(),
+    ));
+    let bridge_clone = browser_bridge.clone();
+    tauri::async_runtime::spawn(async move {
+        let bridge = bridge_clone.read().await;
+        if let Err(e) = bridge.start().await {
+            log::error!("Failed to start browser bridge: {}", e);
+        }
+    });
+
     // Add managers to Tauri's managed state
     app_handle.manage(recording_manager.clone());
     app_handle.manage(model_manager.clone());
     app_handle.manage(transcription_manager.clone());
     app_handle.manage(history_manager.clone());
+    app_handle.manage(browser_bridge);
 
     // Initialize the shortcuts
     shortcut::init_shortcuts(app_handle);
@@ -328,6 +341,16 @@ pub fn run() {
         commands::cloud_stt::set_cloud_stt_api_key,
         commands::cloud_stt::set_cloud_stt_model,
         commands::cloud_stt::get_cloud_stt_config,
+        commands::context::get_context_style_prompts,
+        commands::context::update_context_style_prompt,
+        commands::context::reset_context_style_prompt,
+        commands::context::get_context_mappings,
+        commands::context::update_context_mapping,
+        commands::context::delete_context_mapping,
+        commands::context::get_current_context,
+        commands::context::get_browser_bridge_status,
+        commands::context::add_context_style_prompt,
+        commands::context::delete_context_style_prompt,
         helpers::clamshell::is_laptop,
     ]);
 

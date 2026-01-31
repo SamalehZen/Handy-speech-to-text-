@@ -12,7 +12,8 @@
     "postProcessing": "Post-Elaborazione",
     "history": "Cronologia",
     "debug": "Debug",
-    "about": "Informazioni"
+    "about": "Informazioni",
+    "context": "Contesto"
   },
   "onboarding": {
     "subtitle": "Per cominciare, scegli un modello di riconoscimento vocale",
@@ -413,6 +414,7 @@
   },
   "common": {
     "loading": "Caricamento...",
+    "saving": "Salvataggio...",
     "save": "Salva",
     "cancel": "Annulla",
     "reset": "Reimposta",

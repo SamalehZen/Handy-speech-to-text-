@@ -12,7 +12,8 @@
     "postProcessing": "Post Proceso",
     "history": "Historial",
     "debug": "Depuración",
-    "about": "Acerca de"
+    "about": "Acerca de",
+    "context": "Contexto"
   },
   "onboarding": {
     "subtitle": "Para comenzar, elige un modelo de transcripción",
@@ -413,6 +414,7 @@
   },
   "common": {
     "loading": "Cargando...",
+    "saving": "Guardando...",
     "save": "Guardar",
     "cancel": "Cancelar",
     "reset": "Restablecer",

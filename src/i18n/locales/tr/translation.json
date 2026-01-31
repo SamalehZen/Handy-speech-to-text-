@@ -12,7 +12,8 @@
     "postProcessing": "Son İşlem",
     "history": "Geçmiş",
     "debug": "Hata Ayıklama",
-    "about": "Hakkında"
+    "about": "Hakkında",
+    "context": "Bağlam"
   },
   "onboarding": {
     "subtitle": "Başlamak için bir transkripsiyon modeli seçin",
@@ -417,6 +418,7 @@
   },
   "common": {
     "loading": "Yükleniyor...",
+    "saving": "Kaydediliyor...",
     "save": "Kaydet",
     "cancel": "İptal",
     "reset": "Sıfırla",
