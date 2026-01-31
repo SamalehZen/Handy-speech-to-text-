@@ -315,6 +315,14 @@ pub struct AppSettings {
     pub experimental_enabled: bool,
     #[serde(default)]
     pub keyboard_implementation: KeyboardImplementation,
+    #[serde(default = "default_cloud_stt_enabled")]
+    pub cloud_stt_enabled: bool,
+    #[serde(default)]
+    pub cloud_stt_provider: Option<String>,
+    #[serde(default = "default_cloud_stt_api_keys")]
+    pub cloud_stt_api_keys: HashMap<String, String>,
+    #[serde(default = "default_cloud_stt_models")]
+    pub cloud_stt_models: HashMap<String, String>,
 }
 
 fn default_model() -> String {
@@ -494,6 +502,21 @@ fn default_post_process_prompts() -> Vec<LLMPrompt> {
     }]
 }
 
+fn default_cloud_stt_enabled() -> bool {
+    false
+}
+
+fn default_cloud_stt_api_keys() -> HashMap<String, String> {
+    HashMap::new()
+}
+
+fn default_cloud_stt_models() -> HashMap<String, String> {
+    let mut map = HashMap::new();
+    map.insert("openai".to_string(), "whisper-1".to_string());
+    map.insert("gemini".to_string(), "gemini-2.0-flash".to_string());
+    map
+}
+
 fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
     let mut changed = false;
     for provider in default_post_process_providers() {
@@ -605,6 +628,10 @@ pub fn get_default_settings() -> AppSettings {
         app_language: default_app_language(),
         experimental_enabled: false,
         keyboard_implementation: KeyboardImplementation::default(),
+        cloud_stt_enabled: default_cloud_stt_enabled(),
+        cloud_stt_provider: None,
+        cloud_stt_api_keys: default_cloud_stt_api_keys(),
+        cloud_stt_models: default_cloud_stt_models(),
     }
 }
 

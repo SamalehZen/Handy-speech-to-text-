@@ -8,6 +8,7 @@
   },
   "sidebar": {
     "general": "General",
+    "transcription": "Transcription",
     "advanced": "Advanced",
     "postProcessing": "Post Process",
     "history": "History",
@@ -19,6 +20,25 @@
     "recommended": "Recommended",
     "download": "Download",
     "downloading": "Downloading...",
+    "modeSelection": {
+      "title": "How would you like to transcribe?",
+      "offline": {
+        "title": "Offline",
+        "benefit1": "100% private",
+        "benefit2": "Free forever",
+        "benefit3": "~500MB download"
+      },
+      "cloud": {
+        "title": "Cloud",
+        "benefit1": "Quick setup",
+        "benefit2": "No download",
+        "benefit3": "API key required"
+      }
+    },
+    "cloudSetup": {
+      "subtitle": "Configure your cloud transcription provider",
+      "continue": "Continue"
+    },
     "modelCard": {
       "accuracy": "accuracy",
       "speed": "speed"
@@ -440,7 +460,8 @@
     "off": "Off",
     "yes": "Yes",
     "no": "No",
-    "noOptionsFound": "No options found"
+    "noOptionsFound": "No options found",
+    "back": "Back"
   },
   "accessibility": {
     "permissionsRequired": "Accessibility Permissions Required",
@@ -457,5 +478,28 @@
   },
   "overlay": {
     "transcribing": "Transcribing..."
+  },
+  "cloudStt": {
+    "title": "Transcription Mode",
+    "mode": {
+      "offline": "Offline",
+      "cloud": "Cloud"
+    },
+    "offlineSettings": "Model Settings",
+    "cloudSettings": "Cloud Settings",
+    "provider": "Provider",
+    "providerDescription": "Select a cloud speech-to-text provider",
+    "apiKey": "API Key",
+    "apiKeyDescription": "Enter your API key for the selected provider",
+    "apiKeyPlaceholder": "Enter your API key",
+    "model": "Model",
+    "modelDescription": "Select the transcription model to use",
+    "selectModel": "Select a model",
+    "testConnection": "Test",
+    "testSuccess": "OK",
+    "testFailed": "Failed",
+    "getApiKey": "Get your API key from {{provider}}",
+    "recommended": "Recommended",
+    "activeProvider": "{{provider}} Cloud"
   }
 }

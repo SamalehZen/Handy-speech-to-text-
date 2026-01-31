@@ -1,6 +1,7 @@
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 use crate::apple_intelligence;
 use crate::audio_feedback::{play_feedback_sound, play_feedback_sound_blocking, SoundType};
+use crate::cloud_stt;
 use crate::managers::audio::AudioRecordingManager;
 use crate::managers::history::HistoryManager;
 use crate::managers::transcription::TranscriptionManager;
@@ -10,7 +11,7 @@ use crate::tray::{change_tray_icon, TrayIconState};
 use crate::utils::{self, show_recording_overlay, show_transcribing_overlay};
 use crate::ManagedToggleState;
 use ferrous_opencc::{config::BuiltinConfig, OpenCC};
-use log::{debug, error};
+use log::{debug, error, info};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -213,14 +214,64 @@ async fn maybe_convert_chinese_variant(
     }
 }
 
+async fn perform_transcription(
+    settings: &AppSettings,
+    tm: &Arc<TranscriptionManager>,
+    samples: Vec<f32>,
+) -> Result<String, String> {
+    if settings.cloud_stt_enabled {
+        let provider_id = settings
+            .cloud_stt_provider
+            .as_ref()
+            .ok_or_else(|| "No cloud provider selected".to_string())?;
+
+        let api_key = settings
+            .cloud_stt_api_keys
+            .get(provider_id)
+            .filter(|k| !k.is_empty())
+            .ok_or_else(|| "No API key configured for cloud provider".to_string())?;
+
+        let default_model = match provider_id.as_str() {
+            "openai" => "whisper-1",
+            "gemini" => "gemini-2.0-flash",
+            _ => "",
+        };
+        let model = settings
+            .cloud_stt_models
+            .get(provider_id)
+            .map(|s| s.as_str())
+            .unwrap_or(default_model);
+
+        let language = if settings.selected_language != "auto" {
+            Some(settings.selected_language.as_str())
+        } else {
+            None
+        };
+
+        info!(
+            "Using cloud STT: provider={}, model={}, language={:?}",
+            provider_id, model, language
+        );
+
+        cloud_stt::transcribe(provider_id, api_key, samples, model, language).await
+    } else {
+        tm.transcribe(samples).map_err(|e| e.to_string())
+    }
+}
+
 impl ShortcutAction for TranscribeAction {
     fn start(&self, app: &AppHandle, binding_id: &str, _shortcut_str: &str) {
         let start_time = Instant::now();
         debug!("TranscribeAction::start called for binding: {}", binding_id);
 
-        // Load model in the background
-        let tm = app.state::<Arc<TranscriptionManager>>();
-        tm.initiate_model_load();
+        // Get the microphone mode to determine audio feedback timing
+        let settings = get_settings(app);
+
+        // Load model in the background only if not using cloud STT
+        if !settings.cloud_stt_enabled {
+            let tm = app.state::<Arc<TranscriptionManager>>();
+            tm.initiate_model_load();
+        }
 
         let binding_id = binding_id.to_string();
         change_tray_icon(app, TrayIconState::Recording);
@@ -228,8 +279,6 @@ impl ShortcutAction for TranscribeAction {
 
         let rm = app.state::<Arc<AudioRecordingManager>>();
 
-        // Get the microphone mode to determine audio feedback timing
-        let settings = get_settings(app);
         let is_always_on = settings.always_on_microphone;
         debug!("Microphone mode - always_on: {}", is_always_on);
 
@@ -323,7 +372,8 @@ impl ShortcutAction for TranscribeAction {
 
                 let transcription_time = Instant::now();
                 let samples_clone = samples.clone(); // Clone for history saving
-                match tm.transcribe(samples) {
+                let settings = get_settings(&ah);
+                match perform_transcription(&settings, &tm, samples).await {
                     Ok(transcription) => {
                         debug!(
                             "Transcription completed in {:?}: '{}'",
@@ -331,7 +381,6 @@ impl ShortcutAction for TranscribeAction {
                             transcription
                         );
                         if !transcription.is_empty() {
-                            let settings = get_settings(&ah);
                             let mut final_text = transcription.clone();
                             let mut post_processed_text: Option<String> = None;
                             let mut post_process_prompt: Option<String> = None;
