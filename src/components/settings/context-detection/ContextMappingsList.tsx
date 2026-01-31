@@ -1,7 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Trash2 } from "lucide-react";
-import { commands, ContextMapping, ContextStylePrompt } from "@/bindings";
+import { commands } from "@/bindings";
+
+interface ContextMapping {
+  app_id: string;
+  context_style: string;
+}
+
+interface ContextStylePrompt {
+  id: string;
+  name: string;
+  description: string;
+  prompt: string;
+  is_builtin: boolean;
+}
 import { Dropdown } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
 
@@ -42,8 +55,8 @@ export const ContextMappingsList: React.FC = () => {
   const loadData = async () => {
     try {
       const [mappingsResult, promptsResult] = await Promise.all([
-        commands.getContextMappings(),
-        commands.getContextStylePrompts(),
+        (commands as any).getContextMappings(),
+        (commands as any).getContextStylePrompts(),
       ]);
       if (mappingsResult.status === "ok") {
         setMappings(mappingsResult.data);
@@ -71,7 +84,7 @@ export const ContextMappingsList: React.FC = () => {
 
   const handleStyleChange = async (appId: string, newStyle: string) => {
     try {
-      const result = await commands.updateContextMapping(appId, newStyle);
+      const result = await (commands as any).updateContextMapping(appId, newStyle);
       if (result.status === "ok") {
         await loadData();
       }
@@ -82,7 +95,7 @@ export const ContextMappingsList: React.FC = () => {
 
   const handleResetMapping = async (appId: string) => {
     try {
-      const result = await commands.deleteContextMapping(appId);
+      const result = await (commands as any).deleteContextMapping(appId);
       if (result.status === "ok") {
         await loadData();
       }

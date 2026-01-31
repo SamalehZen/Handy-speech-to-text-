@@ -1,7 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RotateCcw } from "lucide-react";
-import { commands, ContextStylePrompt } from "@/bindings";
+import { commands } from "@/bindings";
+
+interface ContextStylePrompt {
+  id: string;
+  name: string;
+  description: string;
+  prompt: string;
+  is_builtin: boolean;
+}
 import { SettingContainer, Dropdown, Textarea } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -18,7 +26,7 @@ export const ContextPromptEditor: React.FC = () => {
 
   const loadPrompts = async () => {
     try {
-      const result = await commands.getContextStylePrompts();
+      const result = await (commands as any).getContextStylePrompts();
       if (result.status === "ok") {
         setPrompts(result.data);
         if (!selectedPromptId && result.data.length > 0) {
@@ -58,7 +66,7 @@ export const ContextPromptEditor: React.FC = () => {
 
     setIsSaving(true);
     try {
-      const result = await commands.updateContextStylePrompt(
+      const result = await (commands as any).updateContextStylePrompt(
         selectedPromptId,
         draftName.trim() || null,
         draftDescription.trim() || null,
@@ -79,7 +87,7 @@ export const ContextPromptEditor: React.FC = () => {
 
     setIsSaving(true);
     try {
-      const result = await commands.resetContextStylePrompt(selectedPromptId);
+      const result = await (commands as any).resetContextStylePrompt(selectedPromptId);
       if (result.status === "ok") {
         await loadPrompts();
       }
@@ -111,6 +119,7 @@ export const ContextPromptEditor: React.FC = () => {
 
       <SettingContainer
         title={t("settings.context.prompts.selectStyle")}
+        description=""
         layout="stacked"
         grouped={true}
       >
@@ -126,6 +135,7 @@ export const ContextPromptEditor: React.FC = () => {
         <div className="space-y-4 pt-2">
           <SettingContainer
             title={t("settings.context.prompts.styleName")}
+            description=""
             layout="stacked"
             grouped={true}
           >
@@ -141,6 +151,7 @@ export const ContextPromptEditor: React.FC = () => {
 
           <SettingContainer
             title={t("settings.context.prompts.styleDescription")}
+            description=""
             layout="stacked"
             grouped={true}
           >
@@ -158,6 +169,7 @@ export const ContextPromptEditor: React.FC = () => {
 
           <SettingContainer
             title={t("settings.context.prompts.promptText")}
+            description=""
             layout="stacked"
             grouped={true}
           >
