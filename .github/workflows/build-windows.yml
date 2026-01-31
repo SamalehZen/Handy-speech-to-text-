@@ -49,20 +49,31 @@ jobs:
       - name: Install frontend dependencies
         run: bun install
 
-      - name: Remove signing config for unsigned build
+      - name: Disable signing and updater artifacts for unsigned build
         shell: pwsh
         run: |
           $conf = Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json
+          
+          # Remove Windows signCommand
           if ($conf.bundle.windows.PSObject.Properties['signCommand']) {
             $conf.bundle.windows.PSObject.Properties.Remove('signCommand')
+            Write-Host "Removed signCommand"
           }
+          
+          # Disable updater artifacts creation (requires signing)
+          if (-not $conf.bundle.PSObject.Properties['createUpdaterArtifacts']) {
+            $conf.bundle | Add-Member -NotePropertyName 'createUpdaterArtifacts' -NotePropertyValue $false
+          } else {
+            $conf.bundle.createUpdaterArtifacts = $false
+          }
+          Write-Host "Set createUpdaterArtifacts to false"
+          
           $conf | ConvertTo-Json -Depth 20 | Set-Content src-tauri/tauri.conf.json
-          Write-Host "Removed signCommand from tauri.conf.json"
+          Write-Host "Config updated successfully"
 
-      - name: Build with Tauri (without updater signing)
+      - name: Build with Tauri
         shell: pwsh
-        run: |
-          bun run tauri build --bundles msi,nsis
+        run: bun run tauri build
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
