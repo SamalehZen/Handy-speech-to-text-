@@ -186,7 +186,6 @@ impl Default for KeyboardImplementation {
     }
 }
 
-
 impl Default for PasteMethod {
     fn default() -> Self {
         // Default to CtrlV for macOS and Windows, Direct for Linux
@@ -196,7 +195,6 @@ impl Default for PasteMethod {
         return PasteMethod::CtrlV;
     }
 }
-
 
 impl ModelUnloadTimeout {
     pub fn to_minutes(self) -> Option<u64> {
@@ -894,7 +892,9 @@ pub fn load_or_create_app_settings(app: &AppHandle) -> AppSettings {
 
                 // Merge default bindings into existing settings
                 for (key, value) in default_settings.bindings {
-                    if let std::collections::hash_map::Entry::Vacant(e) = settings.bindings.entry(key.clone()) {
+                    if let std::collections::hash_map::Entry::Vacant(e) =
+                        settings.bindings.entry(key.clone())
+                    {
                         debug!("Adding missing binding: {}", key);
                         e.insert(value);
                         updated = true;

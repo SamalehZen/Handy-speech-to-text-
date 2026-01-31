@@ -288,7 +288,6 @@ fn run_consumer(
     }
 
     while let Ok(raw) = sample_rx.recv() {
-
         // ---------- spectrum processing ---------------------------------- //
         if let Some(buckets) = visualizer.feed(&raw) {
             if let Some(cb) = &level_cb {

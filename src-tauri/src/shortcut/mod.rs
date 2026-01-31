@@ -262,9 +262,7 @@ pub fn change_keyboard_implementation_setting(
     settings::write_settings(&app, settings);
 
     // Initialize new implementation if needed (HandyKeys needs state)
-    if new_impl == KeyboardImplementation::HandyKeys
-        && initialize_handy_keys_with_rollback(&app)?
-    {
+    if new_impl == KeyboardImplementation::HandyKeys && initialize_handy_keys_with_rollback(&app)? {
         // Shortcuts already registered during init
         return Ok(ImplementationChangeResult {
             success: true,

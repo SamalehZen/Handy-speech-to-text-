@@ -145,8 +145,8 @@ async fn maybe_post_process_transcription(
     {
         Ok(Some(content)) => {
             // Strip invisible Unicode characters that some LLMs (e.g., Qwen) may insert
-            let content = content
-                .replace(&['\u{200B}', '\u{200C}', '\u{200D}', '\u{FEFF}'][..], "");
+            let content =
+                content.replace(&['\u{200B}', '\u{200C}', '\u{200D}', '\u{FEFF}'][..], "");
             debug!(
                 "LLM post-processing succeeded for provider '{}'. Output length: {} chars",
                 provider.id,
@@ -287,8 +287,8 @@ async fn maybe_post_process_with_context_prompt(
         .await
     {
         Ok(Some(content)) => {
-            let content = content
-                .replace(&['\u{200B}', '\u{200C}', '\u{200D}', '\u{FEFF}'][..], "");
+            let content =
+                content.replace(&['\u{200B}', '\u{200C}', '\u{200D}', '\u{FEFF}'][..], "");
             debug!(
                 "Context-aware LLM post-processing succeeded for provider '{}'. Output length: {} chars",
                 provider.id,
@@ -576,23 +576,24 @@ impl ShortcutAction for TranscribeAction {
                             // Paste the final text (either processed or original)
                             let ah_clone = ah.clone();
                             let paste_time = Instant::now();
-                            let _ = ah.run_on_main_thread(move || {
-                                match utils::paste(final_text, ah_clone.clone()) {
-                                    Ok(()) => debug!(
-                                        "Text pasted successfully in {:?}",
-                                        paste_time.elapsed()
-                                    ),
-                                    Err(e) => error!("Failed to paste transcription: {}", e),
-                                }
-                                // Hide the overlay after transcription is complete
-                                utils::hide_recording_overlay(&ah_clone);
-                                change_tray_icon(&ah_clone, TrayIconState::Idle);
-                            })
-                            .unwrap_or_else(|e| {
-                                error!("Failed to run paste on main thread: {:?}", e);
-                                utils::hide_recording_overlay(&ah);
-                                change_tray_icon(&ah, TrayIconState::Idle);
-                            });
+                            let _ = ah
+                                .run_on_main_thread(move || {
+                                    match utils::paste(final_text, ah_clone.clone()) {
+                                        Ok(()) => debug!(
+                                            "Text pasted successfully in {:?}",
+                                            paste_time.elapsed()
+                                        ),
+                                        Err(e) => error!("Failed to paste transcription: {}", e),
+                                    }
+                                    // Hide the overlay after transcription is complete
+                                    utils::hide_recording_overlay(&ah_clone);
+                                    change_tray_icon(&ah_clone, TrayIconState::Idle);
+                                })
+                                .unwrap_or_else(|e| {
+                                    error!("Failed to run paste on main thread: {:?}", e);
+                                    utils::hide_recording_overlay(&ah);
+                                    change_tray_icon(&ah, TrayIconState::Idle);
+                                });
                         } else {
                             utils::hide_recording_overlay(&ah);
                             change_tray_icon(&ah, TrayIconState::Idle);
