@@ -6,6 +6,7 @@ pub mod audio_toolkit;
 mod clipboard;
 pub mod cloud_stt;
 mod commands;
+pub mod context_detection;
 mod helpers;
 mod input;
 mod llm_client;

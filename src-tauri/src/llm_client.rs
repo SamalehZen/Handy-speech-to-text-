@@ -30,6 +30,21 @@ struct ChatMessageResponse {
     content: Option<String>,
 }
 
+#[derive(Debug, Serialize)]
+struct GeminiContent {
+    parts: Vec<GeminiPart>,
+}
+
+#[derive(Debug, Serialize)]
+struct GeminiPart {
+    text: String,
+}
+
+#[derive(Debug, Serialize)]
+struct GeminiRequest {
+    contents: Vec<GeminiContent>,
+}
+
 /// Build headers for API requests based on provider type
 fn build_headers(provider: &PostProcessProvider, api_key: &str) -> Result<HeaderMap, String> {
     let mut headers = HeaderMap::new();
@@ -85,6 +100,10 @@ pub async fn send_chat_completion(
     model: &str,
     prompt: String,
 ) -> Result<Option<String>, String> {
+    if provider.id == "gemini" {
+        return send_gemini_completion(&api_key, model, prompt).await;
+    }
+
     let base_url = provider.base_url.trim_end_matches('/');
     let url = format!("{}/chat/completions", base_url);
 
@@ -136,6 +155,10 @@ pub async fn fetch_models(
     provider: &PostProcessProvider,
     api_key: String,
 ) -> Result<Vec<String>, String> {
+    if provider.id == "gemini" {
+        return Ok(get_gemini_models());
+    }
+
     let base_url = provider.base_url.trim_end_matches('/');
     let url = format!("{}/models", base_url);
 
@@ -188,4 +211,62 @@ pub async fn fetch_models(
     }
 
     Ok(models)
+}
+
+async fn send_gemini_completion(
+    api_key: &str,
+    model: &str,
+    prompt: String,
+) -> Result<Option<String>, String> {
+    let url = format!(
+        "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent",
+        model
+    );
+
+    debug!("Sending Gemini completion request to: {}", url);
+
+    let client = reqwest::Client::new();
+
+    let request_body = GeminiRequest {
+        contents: vec![GeminiContent {
+            parts: vec![GeminiPart { text: prompt }],
+        }],
+    };
+
+    let response = client
+        .post(&url)
+        .header("x-goog-api-key", api_key)
+        .header(CONTENT_TYPE, "application/json")
+        .json(&request_body)
+        .send()
+        .await
+        .map_err(|e| format!("Gemini request failed: {}", e))?;
+
+    let status = response.status();
+    if !status.is_success() {
+        let error_text = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Failed to read error response".to_string());
+        return Err(format!("Gemini API error {}: {}", status, error_text));
+    }
+
+    let json: serde_json::Value = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse Gemini response: {}", e))?;
+
+    Ok(json["candidates"][0]["content"]["parts"][0]["text"]
+        .as_str()
+        .map(|s| s.to_string()))
+}
+
+pub fn get_gemini_models() -> Vec<String> {
+    vec![
+        "gemini-2.5-flash".to_string(),
+        "gemini-2.5-pro".to_string(),
+        "gemini-2.0-flash".to_string(),
+        "gemini-1.5-flash".to_string(),
+        "gemini-1.5-pro".to_string(),
+    ]
 }

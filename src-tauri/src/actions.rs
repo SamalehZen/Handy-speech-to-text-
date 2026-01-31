@@ -2,6 +2,8 @@
 use crate::apple_intelligence;
 use crate::audio_feedback::{play_feedback_sound, play_feedback_sound_blocking, SoundType};
 use crate::cloud_stt;
+use crate::context_detection::context_resolver::ContextResolver;
+use crate::context_detection::DetectedContext;
 use crate::managers::audio::AudioRecordingManager;
 use crate::managers::history::HistoryManager;
 use crate::managers::transcription::TranscriptionManager;
@@ -162,6 +164,151 @@ async fn maybe_post_process_transcription(
         Err(e) => {
             error!(
                 "LLM post-processing failed for provider '{}': {}. Falling back to original transcription.",
+                provider.id,
+                e
+            );
+            None
+        }
+    }
+}
+
+async fn maybe_post_process_with_context_prompt(
+    settings: &AppSettings,
+    transcription: &str,
+    context_prompt: Option<String>,
+) -> Option<String> {
+    if !settings.post_process_enabled {
+        return None;
+    }
+
+    let provider = match settings.active_post_process_provider().cloned() {
+        Some(provider) => provider,
+        None => {
+            debug!("Post-processing enabled but no provider is selected");
+            return None;
+        }
+    };
+
+    let model = settings
+        .post_process_models
+        .get(&provider.id)
+        .cloned()
+        .unwrap_or_default();
+
+    if model.trim().is_empty() {
+        debug!(
+            "Post-processing skipped because provider '{}' has no model configured",
+            provider.id
+        );
+        return None;
+    }
+
+    let prompt = match context_prompt {
+        Some(p) => p,
+        None => {
+            let selected_prompt_id = match &settings.post_process_selected_prompt_id {
+                Some(id) => id.clone(),
+                None => {
+                    debug!("Post-processing skipped because no prompt is selected");
+                    return None;
+                }
+            };
+
+            match settings
+                .post_process_prompts
+                .iter()
+                .find(|prompt| prompt.id == selected_prompt_id)
+            {
+                Some(prompt) => prompt.prompt.clone(),
+                None => {
+                    debug!(
+                        "Post-processing skipped because prompt '{}' was not found",
+                        selected_prompt_id
+                    );
+                    return None;
+                }
+            }
+        }
+    };
+
+    if prompt.trim().is_empty() {
+        debug!("Post-processing skipped because the prompt is empty");
+        return None;
+    }
+
+    debug!(
+        "Starting context-aware LLM post-processing with provider '{}' (model: {})",
+        provider.id, model
+    );
+
+    let processed_prompt = prompt.replace("${output}", transcription);
+    debug!("Processed prompt length: {} chars", processed_prompt.len());
+
+    if provider.id == APPLE_INTELLIGENCE_PROVIDER_ID {
+        #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+        {
+            if !apple_intelligence::check_apple_intelligence_availability() {
+                debug!("Apple Intelligence selected but not currently available on this device");
+                return None;
+            }
+
+            let token_limit = model.trim().parse::<i32>().unwrap_or(0);
+            return match apple_intelligence::process_text(&processed_prompt, token_limit) {
+                Ok(result) => {
+                    if result.trim().is_empty() {
+                        debug!("Apple Intelligence returned an empty response");
+                        None
+                    } else {
+                        debug!(
+                            "Apple Intelligence post-processing succeeded. Output length: {} chars",
+                            result.len()
+                        );
+                        Some(result)
+                    }
+                }
+                Err(err) => {
+                    error!("Apple Intelligence post-processing failed: {}", err);
+                    None
+                }
+            };
+        }
+
+        #[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
+        {
+            debug!("Apple Intelligence provider selected on unsupported platform");
+            return None;
+        }
+    }
+
+    let api_key = settings
+        .post_process_api_keys
+        .get(&provider.id)
+        .cloned()
+        .unwrap_or_default();
+
+    match crate::llm_client::send_chat_completion(&provider, api_key, &model, processed_prompt)
+        .await
+    {
+        Ok(Some(content)) => {
+            let content = content
+                .replace('\u{200B}', "")
+                .replace('\u{200C}', "")
+                .replace('\u{200D}', "")
+                .replace('\u{FEFF}', "");
+            debug!(
+                "Context-aware LLM post-processing succeeded for provider '{}'. Output length: {} chars",
+                provider.id,
+                content.len()
+            );
+            Some(content)
+        }
+        Ok(None) => {
+            error!("LLM API response has no content");
+            None
+        }
+        Err(e) => {
+            error!(
+                "Context-aware LLM post-processing failed for provider '{}': {}. Falling back to original transcription.",
                 provider.id,
                 e
             );
@@ -482,6 +629,153 @@ impl ShortcutAction for TranscribeAction {
     }
 }
 
+// Transcribe With Context Action - Detects app context and uses appropriate LLM prompt
+struct TranscribeWithContextAction;
+
+impl ShortcutAction for TranscribeWithContextAction {
+    fn start(&self, app: &AppHandle, binding_id: &str, shortcut_str: &str) {
+        TranscribeAction.start(app, binding_id, shortcut_str);
+    }
+
+    fn stop(&self, app: &AppHandle, binding_id: &str, _shortcut_str: &str) {
+        shortcut::unregister_cancel_shortcut(app);
+
+        let stop_time = Instant::now();
+        debug!("TranscribeWithContextAction::stop called for binding: {}", binding_id);
+
+        let ah = app.clone();
+        let rm = Arc::clone(&app.state::<Arc<AudioRecordingManager>>());
+        let tm = Arc::clone(&app.state::<Arc<TranscriptionManager>>());
+        let hm = Arc::clone(&app.state::<Arc<HistoryManager>>());
+
+        change_tray_icon(app, TrayIconState::Transcribing);
+        show_transcribing_overlay(app);
+
+        rm.remove_mute();
+        play_feedback_sound(app, SoundType::Stop);
+
+        let binding_id = binding_id.to_string();
+
+        tauri::async_runtime::spawn(async move {
+            let binding_id = binding_id.clone();
+            debug!(
+                "Starting async context-aware transcription task for binding: {}",
+                binding_id
+            );
+
+            let stop_recording_time = Instant::now();
+            if let Some(samples) = rm.stop_recording(&binding_id) {
+                debug!(
+                    "Recording stopped and samples retrieved in {:?}, sample count: {}",
+                    stop_recording_time.elapsed(),
+                    samples.len()
+                );
+
+                let settings = get_settings(&ah);
+
+                let resolver = ContextResolver::default();
+                let detected_context = resolver.resolve(&settings).await;
+
+                info!(
+                    "Context detected: {} ({}) -> style: {}",
+                    detected_context.app_name, detected_context.app_id, detected_context.context_style
+                );
+
+                let context_prompt = settings
+                    .context_style_prompts
+                    .iter()
+                    .find(|p| p.id == detected_context.context_style)
+                    .map(|p| p.prompt.clone());
+
+                let transcription_time = Instant::now();
+                let samples_clone = samples.clone();
+
+                match perform_transcription(&settings, &tm, samples).await {
+                    Ok(transcription) => {
+                        debug!(
+                            "Transcription completed in {:?}: '{}'",
+                            transcription_time.elapsed(),
+                            transcription
+                        );
+
+                        if !transcription.is_empty() {
+                            let mut final_text = transcription.clone();
+                            let mut post_processed_text: Option<String> = None;
+                            let mut post_process_prompt: Option<String> = context_prompt.clone();
+
+                            if let Some(converted_text) =
+                                maybe_convert_chinese_variant(&settings, &transcription).await
+                            {
+                                final_text = converted_text;
+                            }
+
+                            if let Some(processed_text) =
+                                maybe_post_process_with_context_prompt(&settings, &final_text, context_prompt).await
+                            {
+                                post_processed_text = Some(processed_text.clone());
+                                final_text = processed_text;
+                            } else if final_text != transcription {
+                                post_processed_text = Some(final_text.clone());
+                            }
+
+                            let hm_clone = Arc::clone(&hm);
+                            let transcription_for_history = transcription.clone();
+                            tauri::async_runtime::spawn(async move {
+                                if let Err(e) = hm_clone
+                                    .save_transcription(
+                                        samples_clone,
+                                        transcription_for_history,
+                                        post_processed_text,
+                                        post_process_prompt,
+                                    )
+                                    .await
+                                {
+                                    error!("Failed to save transcription to history: {}", e);
+                                }
+                            });
+
+                            let ah_clone = ah.clone();
+                            let paste_time = Instant::now();
+                            ah.run_on_main_thread(move || {
+                                match utils::paste(final_text, ah_clone.clone()) {
+                                    Ok(()) => debug!(
+                                        "Text pasted successfully in {:?}",
+                                        paste_time.elapsed()
+                                    ),
+                                    Err(e) => error!("Failed to paste transcription: {}", e),
+                                }
+                                utils::hide_recording_overlay(&ah_clone);
+                                change_tray_icon(&ah_clone, TrayIconState::Idle);
+                            });
+                        } else {
+                            utils::hide_recording_overlay(&ah);
+                            change_tray_icon(&ah, TrayIconState::Idle);
+                        }
+                    }
+                    Err(err) => {
+                        debug!("Context-aware transcription error: {}", err);
+                        utils::hide_recording_overlay(&ah);
+                        change_tray_icon(&ah, TrayIconState::Idle);
+                    }
+                }
+            } else {
+                debug!("No samples retrieved from recording stop");
+                utils::hide_recording_overlay(&ah);
+                change_tray_icon(&ah, TrayIconState::Idle);
+            }
+
+            if let Ok(mut states) = ah.state::<ManagedToggleState>().lock() {
+                states.active_toggles.insert(binding_id, false);
+            }
+        });
+
+        debug!(
+            "TranscribeWithContextAction::stop completed in {:?}",
+            stop_time.elapsed()
+        );
+    }
+}
+
 // Cancel Action
 struct CancelAction;
 
@@ -524,6 +818,10 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
     map.insert(
         "transcribe".to_string(),
         Arc::new(TranscribeAction) as Arc<dyn ShortcutAction>,
+    );
+    map.insert(
+        "transcribe_with_context".to_string(),
+        Arc::new(TranscribeWithContextAction) as Arc<dyn ShortcutAction>,
     );
     map.insert(
         "cancel".to_string(),

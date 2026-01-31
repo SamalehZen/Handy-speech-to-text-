@@ -93,6 +93,21 @@ pub struct LLMPrompt {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Type)]
+pub struct ContextMapping {
+    pub app_id: String,
+    pub context_style: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Type)]
+pub struct ContextStylePrompt {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub prompt: String,
+    pub is_builtin: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Type)]
 pub struct PostProcessProvider {
     pub id: String,
     pub label: String,
@@ -323,6 +338,10 @@ pub struct AppSettings {
     pub cloud_stt_api_keys: HashMap<String, String>,
     #[serde(default = "default_cloud_stt_models")]
     pub cloud_stt_models: HashMap<String, String>,
+    #[serde(default = "default_context_mappings")]
+    pub context_mappings: Vec<ContextMapping>,
+    #[serde(default = "default_context_style_prompts")]
+    pub context_style_prompts: Vec<ContextStylePrompt>,
 }
 
 fn default_model() -> String {
@@ -389,7 +408,7 @@ fn default_sound_theme() -> SoundTheme {
 }
 
 fn default_post_process_enabled() -> bool {
-    false
+    true
 }
 
 fn default_app_language() -> String {
@@ -399,11 +418,18 @@ fn default_app_language() -> String {
 }
 
 fn default_post_process_provider_id() -> String {
-    "openai".to_string()
+    "gemini".to_string()
 }
 
 fn default_post_process_providers() -> Vec<PostProcessProvider> {
     let mut providers = vec![
+        PostProcessProvider {
+            id: "gemini".to_string(),
+            label: "Google Gemini".to_string(),
+            base_url: "https://generativelanguage.googleapis.com/v1beta".to_string(),
+            allow_base_url_edit: false,
+            models_endpoint: None,
+        },
         PostProcessProvider {
             id: "openai".to_string(),
             label: "OpenAI".to_string(),
@@ -477,10 +503,15 @@ fn default_post_process_api_keys() -> HashMap<String, String> {
 }
 
 fn default_model_for_provider(provider_id: &str) -> String {
-    if provider_id == APPLE_INTELLIGENCE_PROVIDER_ID {
-        return APPLE_INTELLIGENCE_DEFAULT_MODEL_ID.to_string();
+    match provider_id {
+        "gemini" => "gemini-2.5-flash".to_string(),
+        "openai" => "gpt-4o-mini".to_string(),
+        "anthropic" => "claude-3-5-sonnet-20241022".to_string(),
+        "groq" => "llama-3.3-70b-versatile".to_string(),
+        "cerebras" => "llama-3.3-70b".to_string(),
+        id if id == APPLE_INTELLIGENCE_PROVIDER_ID => APPLE_INTELLIGENCE_DEFAULT_MODEL_ID.to_string(),
+        _ => String::new(),
     }
-    String::new()
 }
 
 fn default_post_process_models() -> HashMap<String, String> {
@@ -515,6 +546,180 @@ fn default_cloud_stt_models() -> HashMap<String, String> {
     map.insert("openai".to_string(), "whisper-1".to_string());
     map.insert("gemini".to_string(), "gemini-2.0-flash".to_string());
     map
+}
+
+fn default_context_mappings() -> Vec<ContextMapping> {
+    vec![]
+}
+
+fn default_context_style_prompts() -> Vec<ContextStylePrompt> {
+    vec![
+        ContextStylePrompt {
+            id: "email_pro".to_string(),
+            name: "Email Professionnel".to_string(),
+            description: "Style formel avec salutation et formule de politesse".to_string(),
+            prompt: r#"Tu es un assistant qui reformule des messages vocaux en emails professionnels.
+
+Règles:
+- Garde le sens exact du message original
+- Ajoute une salutation appropriée (Bonjour, Madame/Monsieur)
+- Utilise un ton formel et professionnel
+- Ajoute une formule de politesse à la fin (Cordialement, Bien à vous)
+- Corrige la grammaire et l'orthographe
+- Structure en paragraphes si nécessaire
+
+Texte dicté:
+${output}
+
+Email reformulé:"#.to_string(),
+            is_builtin: true,
+        },
+        ContextStylePrompt {
+            id: "chat".to_string(),
+            name: "Chat / Messagerie".to_string(),
+            description: "Style décontracté et court".to_string(),
+            prompt: r#"Tu es un assistant qui reformule des messages vocaux en messages de chat.
+
+Règles:
+- Garde le message court et direct
+- Ton décontracté mais correct
+- Pas de formules de politesse formelles
+- Corrige juste la grammaire et l'orthographe
+- Garde les expressions familières si appropriées
+
+Texte dicté:
+${output}
+
+Message reformulé:"#.to_string(),
+            is_builtin: true,
+        },
+        ContextStylePrompt {
+            id: "code".to_string(),
+            name: "Code / Développement".to_string(),
+            description: "Code brut ou commentaires techniques".to_string(),
+            prompt: r#"Tu es un assistant pour développeurs.
+
+Si le texte dicté décrit du code ou une instruction de programmation:
+- Génère le code correspondant directement
+- Pas de markdown, pas de blocs de code
+- Code brut prêt à coller
+
+Si le texte est un commentaire ou une explication:
+- Formate-le comme un commentaire de code approprié
+- Garde-le technique et concis
+
+Texte dicté:
+${output}
+
+Résultat:"#.to_string(),
+            is_builtin: true,
+        },
+        ContextStylePrompt {
+            id: "notes".to_string(),
+            name: "Notes / Documentation".to_string(),
+            description: "Style structuré avec bullet points".to_string(),
+            prompt: r#"Tu es un assistant qui reformule des notes vocales.
+
+Règles:
+- Structure le contenu avec des bullet points (-)
+- Utilise des titres si plusieurs sujets
+- Garde l'information essentielle
+- Corrige la grammaire
+- Format clair et scannable
+
+Texte dicté:
+${output}
+
+Notes reformulées:"#.to_string(),
+            is_builtin: true,
+        },
+        ContextStylePrompt {
+            id: "ai_assistant".to_string(),
+            name: "Assistant IA".to_string(),
+            description: "Prompt engineering optimisé".to_string(),
+            prompt: r#"Tu es un assistant qui transforme des instructions vocales en prompts optimisés pour l'IA.
+
+Règles:
+- Reformule en prompt clair et structuré
+- Ajoute du contexte si nécessaire
+- Utilise des instructions précises
+- Format adapté pour ChatGPT/Claude
+
+Texte dicté:
+${output}
+
+Prompt optimisé:"#.to_string(),
+            is_builtin: true,
+        },
+        ContextStylePrompt {
+            id: "social_pro".to_string(),
+            name: "Réseaux Pro".to_string(),
+            description: "LinkedIn - ton professionnel".to_string(),
+            prompt: r#"Tu es un assistant pour la rédaction sur LinkedIn.
+
+Règles:
+- Ton professionnel mais accessible
+- Pas de jargon excessif
+- Structure claire
+- Adapté au format LinkedIn
+- Corrige la grammaire
+
+Texte dicté:
+${output}
+
+Publication reformulée:"#.to_string(),
+            is_builtin: true,
+        },
+        ContextStylePrompt {
+            id: "social_casual".to_string(),
+            name: "Réseaux Casual".to_string(),
+            description: "Twitter/X - ton décontracté".to_string(),
+            prompt: r#"Tu es un assistant pour Twitter/X.
+
+Règles:
+- Message court (max 280 caractères si possible)
+- Ton décontracté
+- Peut utiliser des emojis si approprié
+- Direct et impactant
+
+Texte dicté:
+${output}
+
+Tweet reformulé:"#.to_string(),
+            is_builtin: true,
+        },
+        ContextStylePrompt {
+            id: "correction".to_string(),
+            name: "Correction Simple".to_string(),
+            description: "Correction orthographe uniquement (fallback)".to_string(),
+            prompt: r#"Corrige uniquement l'orthographe et la grammaire du texte suivant. Ne change pas le style ni le sens.
+
+Texte:
+${output}
+
+Texte corrigé:"#.to_string(),
+            is_builtin: true,
+        },
+        ContextStylePrompt {
+            id: "dev_tools".to_string(),
+            name: "Outils Dev".to_string(),
+            description: "GitHub, Linear - issues et PRs".to_string(),
+            prompt: r#"Tu es un assistant pour la rédaction technique (issues, PRs, tickets).
+
+Règles:
+- Titre clair et descriptif
+- Description structurée
+- Bullet points pour les étapes/détails
+- Ton technique mais accessible
+- Pas de formules de politesse
+
+Texte dicté:
+${output}
+
+Contenu reformulé:"#.to_string(),
+            is_builtin: true,
+        },
+    ]
 }
 
 fn ensure_post_process_defaults(settings: &mut AppSettings) -> bool {
@@ -568,6 +773,15 @@ pub fn get_default_settings() -> AppSettings {
     #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
     let default_shortcut = "alt+space";
 
+    #[cfg(target_os = "windows")]
+    let context_shortcut = "ctrl+alt+space";
+    #[cfg(target_os = "macos")]
+    let context_shortcut = "option+shift+space";
+    #[cfg(target_os = "linux")]
+    let context_shortcut = "ctrl+alt+space";
+    #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
+    let context_shortcut = "alt+shift+space";
+
     let mut bindings = HashMap::new();
     bindings.insert(
         "transcribe".to_string(),
@@ -577,6 +791,16 @@ pub fn get_default_settings() -> AppSettings {
             description: "Converts your speech into text.".to_string(),
             default_binding: default_shortcut.to_string(),
             current_binding: default_shortcut.to_string(),
+        },
+    );
+    bindings.insert(
+        "transcribe_with_context".to_string(),
+        ShortcutBinding {
+            id: "transcribe_with_context".to_string(),
+            name: "Transcribe with Context".to_string(),
+            description: "Transcribes speech and applies context-aware LLM processing.".to_string(),
+            default_binding: context_shortcut.to_string(),
+            current_binding: context_shortcut.to_string(),
         },
     );
     bindings.insert(
@@ -632,6 +856,8 @@ pub fn get_default_settings() -> AppSettings {
         cloud_stt_provider: None,
         cloud_stt_api_keys: default_cloud_stt_api_keys(),
         cloud_stt_models: default_cloud_stt_models(),
+        context_mappings: default_context_mappings(),
+        context_style_prompts: default_context_style_prompts(),
     }
 }
 
