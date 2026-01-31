@@ -9,6 +9,7 @@ This document defines development standards for consistent, secure, and maintain
 ### 1.1 Files and Folders
 
 **Frontend (TypeScript/React):**
+
 - Use kebab-case for all file and folder names
 - Components: `my-component.tsx`
 - Hooks: `use-my-hook.ts`
@@ -16,6 +17,7 @@ This document defines development standards for consistent, secure, and maintain
 - Types: `types.ts` or `my-feature.types.ts`
 
 **Backend (Rust):**
+
 - Use snake_case for file and folder names
 - Modules: `audio_toolkit.rs`, `model_manager.rs`
 - Follow Rust standard naming conventions
@@ -36,12 +38,12 @@ This document defines development standards for consistent, secure, and maintain
 
 ```typescript
 interface UserSettings {
-    language: string;
-    theme: 'light' | 'dark';
-    shortcut: string;
+  language: string;
+  theme: "light" | "dark";
+  shortcut: string;
 }
 
-type TranscriptionStatus = 'idle' | 'recording' | 'processing' | 'complete';
+type TranscriptionStatus = "idle" | "recording" | "processing" | "complete";
 ```
 
 ---
@@ -90,10 +92,10 @@ src-tauri/src/
 Import directly from source files (avoid barrel files):
 
 ```typescript
-import { Button } from '@/components/button';
-import { useSettings } from '@/hooks/use-settings';
+import { Button } from "@/components/button";
+import { useSettings } from "@/hooks/use-settings";
 
-import { Button } from '@/components';
+import { Button } from "@/components";
 ```
 
 ---
@@ -106,22 +108,26 @@ Use function components with explicit prop types:
 
 ```tsx
 interface TranscriptionDisplayProps {
-    text: string;
-    isLoading: boolean;
-    onRetry?: () => void;
+  text: string;
+  isLoading: boolean;
+  onRetry?: () => void;
 }
 
-const TranscriptionDisplay = ({ text, isLoading, onRetry }: TranscriptionDisplayProps) => {
-    if (isLoading) {
-        return <LoadingSpinner />;
-    }
-    
-    return (
-        <div className="transcription-container">
-            <p>{text}</p>
-            {onRetry && <button onClick={onRetry}>Retry</button>}
-        </div>
-    );
+const TranscriptionDisplay = ({
+  text,
+  isLoading,
+  onRetry,
+}: TranscriptionDisplayProps) => {
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  return (
+    <div className="transcription-container">
+      <p>{text}</p>
+      {onRetry && <button onClick={onRetry}>Retry</button>}
+    </div>
+  );
 };
 ```
 
@@ -140,21 +146,21 @@ const TranscriptionDisplay = ({ text, isLoading, onRetry }: TranscriptionDisplay
 ### 3.4 Tauri Integration
 
 ```typescript
-import { invoke } from '@tauri-apps/api/core';
-import { listen } from '@tauri-apps/api/event';
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 
 const startRecording = async () => {
-    await invoke('start_recording');
+  await invoke("start_recording");
 };
 
 useEffect(() => {
-    const unlisten = listen('transcription_complete', (event) => {
-        setTranscription(event.payload as string);
-    });
-    
-    return () => {
-        unlisten.then(fn => fn());
-    };
+  const unlisten = listen("transcription_complete", (event) => {
+    setTranscription(event.payload as string);
+  });
+
+  return () => {
+    unlisten.then((fn) => fn());
+  };
 }, []);
 ```
 
@@ -218,9 +224,9 @@ impl TranscriptionManager {
 
 Add doc comments for public APIs:
 
-```rust
+````rust
 /// Manages audio recording from input devices.
-/// 
+///
 /// # Example
 /// ```
 /// let manager = AudioManager::new(config)?;
@@ -229,7 +235,7 @@ Add doc comments for public APIs:
 pub struct AudioManager {
     // ...
 }
-```
+````
 
 ---
 
@@ -244,7 +250,7 @@ const data: any = fetchData();
 
 const data: unknown = fetchData();
 if (isAudioConfig(data)) {
-    processConfig(data);
+  processConfig(data);
 }
 ```
 
@@ -253,11 +259,19 @@ if (isAudioConfig(data)) {
 Be explicit about conditions:
 
 ```typescript
-if (items.length > 0) { /* ... */ }
-if (user != null) { /* ... */ }
+if (items.length > 0) {
+  /* ... */
+}
+if (user != null) {
+  /* ... */
+}
 
-if (items.length) { /* ... */ }
-if (user) { /* ... */ }
+if (items.length) {
+  /* ... */
+}
+if (user) {
+  /* ... */
+}
 ```
 
 ### 5.3 Zod for Validation
@@ -265,12 +279,12 @@ if (user) { /* ... */ }
 Use Zod schemas for runtime validation (already in project):
 
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 const SettingsSchema = z.object({
-    language: z.string(),
-    shortcut: z.string(),
-    audioDevice: z.string().optional(),
+  language: z.string(),
+  shortcut: z.string(),
+  audioDevice: z.string().optional(),
 });
 
 type Settings = z.infer<typeof SettingsSchema>;
@@ -283,11 +297,13 @@ type Settings = z.infer<typeof SettingsSchema>;
 ### 6.1 Linting & Formatting
 
 **Frontend:**
+
 - ESLint for TypeScript/JavaScript
 - Prettier for formatting
 - Run before committing: `bun run lint` and `bun run format:check`
 
 **Backend:**
+
 - `cargo fmt` for formatting
 - `cargo clippy` for linting
 - Run: `cd src-tauri && cargo fmt && cargo clippy`
@@ -304,6 +320,7 @@ cd src-tauri && cargo clippy -- -D warnings
 ### 6.3 Commit Messages
 
 Use conventional commits:
+
 - `feat:` new features
 - `fix:` bug fixes
 - `docs:` documentation changes
@@ -374,16 +391,19 @@ Test the production build before submitting PRs.
 ## 10. Platform-Specific Notes
 
 ### macOS
+
 - Metal acceleration for Whisper
 - Accessibility permissions for global shortcuts
 - Hardened runtime for distribution
 
 ### Windows
+
 - Vulkan acceleration
 - Code signing for distribution
 - Handle UAC considerations
 
 ### Linux
+
 - OpenBLAS + Vulkan acceleration
 - AppImage for distribution
 - Test on multiple desktop environments

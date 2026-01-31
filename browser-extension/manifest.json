@@ -3,13 +3,8 @@
   "name": "Handy Context Bridge",
   "version": "1.0.0",
   "description": "Sends browser context to Handy for intelligent context detection",
-  "permissions": [
-    "activeTab",
-    "tabs"
-  ],
-  "host_permissions": [
-    "<all_urls>"
-  ],
+  "permissions": ["activeTab", "tabs"],
+  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
   },

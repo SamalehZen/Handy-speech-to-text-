@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ExternalLink } from "lucide-react";
-import { commands, type CloudSTTProvider, type CloudSTTConfig } from "@/bindings";
+import {
+  commands,
+  type CloudSTTProvider,
+  type CloudSTTConfig,
+} from "@/bindings";
 import { SettingContainer } from "../../ui/SettingContainer";
 import { CloudProviderCard } from "./CloudProviderCard";
 import { ApiKeyInput } from "./ApiKeyInput";
@@ -47,7 +51,7 @@ export const CloudSTTSettings: React.FC<CloudSTTSettingsProps> = ({
     try {
       await commands.setCloudSttProvider(providerId);
       setConfig((prev) =>
-        prev ? { ...prev, active_provider: providerId } : null
+        prev ? { ...prev, active_provider: providerId } : null,
       );
       onConfigChange?.();
     } catch (error) {
@@ -64,7 +68,7 @@ export const CloudSTTSettings: React.FC<CloudSTTSettingsProps> = ({
               ...prev,
               api_keys: { ...prev.api_keys, [providerId]: apiKey },
             }
-          : null
+          : null,
       );
       onConfigChange?.();
     } catch (error) {
@@ -79,9 +83,12 @@ export const CloudSTTSettings: React.FC<CloudSTTSettingsProps> = ({
         prev
           ? {
               ...prev,
-              selected_models: { ...prev.selected_models, [providerId]: modelId },
+              selected_models: {
+                ...prev.selected_models,
+                [providerId]: modelId,
+              },
             }
-          : null
+          : null,
       );
       onConfigChange?.();
     } catch (error) {
@@ -112,7 +119,7 @@ export const CloudSTTSettings: React.FC<CloudSTTSettingsProps> = ({
   }
 
   const selectedProvider = providers.find(
-    (p) => p.id === config.active_provider
+    (p) => p.id === config.active_provider,
   );
 
   return (

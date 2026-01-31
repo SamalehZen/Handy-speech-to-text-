@@ -16,9 +16,7 @@ const CloudIndicator: React.FC<{ config: CloudSTTConfig }> = ({ config }) => {
   return (
     <div className="flex items-center gap-2 px-2 py-1 bg-logo-primary/10 rounded text-sm font-medium text-logo-primary">
       <Cloud className="w-4 h-4" />
-      <span>
-        {t("cloudStt.activeProvider", { provider: providerLabel })}
-      </span>
+      <span>{t("cloudStt.activeProvider", { provider: providerLabel })}</span>
     </div>
   );
 };
@@ -53,7 +51,8 @@ const Footer: React.FC = () => {
     fetchCloudConfig();
   }, []);
 
-  const showCloudIndicator = cloudConfig?.enabled && cloudConfig?.active_provider;
+  const showCloudIndicator =
+    cloudConfig?.enabled && cloudConfig?.active_provider;
 
   return (
     <div className="w-full border-t border-mid-gray/20 pt-3">
