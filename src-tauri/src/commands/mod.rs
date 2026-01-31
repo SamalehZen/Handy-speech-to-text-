@@ -1,5 +1,6 @@
 pub mod audio;
 pub mod cloud_stt;
+pub mod context;
 pub mod history;
 pub mod models;
 pub mod transcription;

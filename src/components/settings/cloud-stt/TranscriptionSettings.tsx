@@ -45,7 +45,10 @@ export const TranscriptionSettings: React.FC = () => {
     <div className="space-y-6">
       <SettingsGroup title={t("cloudStt.title")}>
         <div className="px-4 py-3">
-          <TranscriptionModeSelector mode={mode} onModeChange={handleModeChange} />
+          <TranscriptionModeSelector
+            mode={mode}
+            onModeChange={handleModeChange}
+          />
         </div>
       </SettingsGroup>
 

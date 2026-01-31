@@ -23,7 +23,7 @@ impl std::fmt::Display for CloudSTTProviderId {
 }
 
 impl CloudSTTProviderId {
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn parse(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
             "openai" => Some(CloudSTTProviderId::OpenAI),
             "gemini" => Some(CloudSTTProviderId::Gemini),

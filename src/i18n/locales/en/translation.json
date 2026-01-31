@@ -11,6 +11,7 @@
     "transcription": "Transcription",
     "advanced": "Advanced",
     "postProcessing": "Post Process",
+    "context": "Context",
     "history": "History",
     "debug": "Debug",
     "about": "About"
@@ -442,6 +443,7 @@
   },
   "common": {
     "loading": "Loading...",
+    "saving": "Saving...",
     "save": "Save",
     "cancel": "Cancel",
     "reset": "Reset",
@@ -501,5 +503,40 @@
     "getApiKey": "Get your API key from {{provider}}",
     "recommended": "Recommended",
     "activeProvider": "{{provider}} Cloud"
+  },
+  "settings": {
+    "context": {
+      "title": "Context Detection",
+      "disabledNotice": "Enable post-processing to use context detection.",
+      "mappings": {
+        "title": "Applications & Sites",
+        "description": "Associate each application with an automatic reformulation style.",
+        "reset": "Reset"
+      },
+      "prompts": {
+        "title": "Reformulation Styles",
+        "description": "Customize LLM prompts for each context style.",
+        "selectStyle": "Select a style",
+        "styleName": "Style name",
+        "styleNamePlaceholder": "E.g., Professional Email",
+        "styleDescription": "Description",
+        "styleDescriptionPlaceholder": "Short description of the style",
+        "promptText": "LLM Prompt",
+        "promptPlaceholder": "Instructions for the LLM...",
+        "promptTip": "Use {TRANSCRIPT} to insert the transcribed text.",
+        "save": "Save",
+        "reset": "Reset",
+        "resetToDefault": "Reset to default"
+      },
+      "categories": {
+        "email": "Email",
+        "chat": "Messaging",
+        "code": "Development",
+        "notes": "Notes",
+        "ai": "AI Assistants",
+        "social": "Social Media",
+        "dev": "Dev Tools"
+      }
+    }
   }
 }

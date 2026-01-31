@@ -12,7 +12,8 @@
     "postProcessing": "Následné zpracování",
     "history": "Historie",
     "debug": "Ladění",
-    "about": "O aplikaci"
+    "about": "O aplikaci",
+    "context": "Kontext"
   },
   "onboarding": {
     "subtitle": "Pro začátek vyberte model pro přepis",
@@ -397,6 +398,7 @@
   },
   "common": {
     "loading": "Načítání...",
+    "saving": "Ukládání...",
     "save": "Uložit",
     "cancel": "Zrušit",
     "reset": "Obnovit",

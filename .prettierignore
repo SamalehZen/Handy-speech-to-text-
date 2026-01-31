@@ -15,6 +15,9 @@ src-tauri/gen
 # Generated files
 src/bindings.ts
 
+# GitHub workflows (YAML with template literals)
+.github/
+
 # Misc
 .DS_Store
 *.log

@@ -21,6 +21,7 @@ struct OpenAIErrorResponse {
 struct OpenAIError {
     message: String,
     #[serde(rename = "type")]
+    #[allow(dead_code)]
     error_type: Option<String>,
     code: Option<String>,
 }
@@ -106,7 +107,10 @@ pub async fn transcribe(
     debug!("OpenAI API response status: {}", status);
 
     if !status.is_success() {
-        error!("OpenAI API error: status={}, body={}", status, response_text);
+        error!(
+            "OpenAI API error: status={}, body={}",
+            status, response_text
+        );
 
         if let Ok(error_response) = serde_json::from_str::<OpenAIErrorResponse>(&response_text) {
             let error_msg = match error_response.error.code.as_deref() {
@@ -128,7 +132,10 @@ pub async fn transcribe(
     let transcription: OpenAITranscriptionResponse = serde_json::from_str(&response_text)
         .map_err(|e| format!("Failed to parse response: {}", e))?;
 
-    info!("Transcription successful: {} chars", transcription.text.len());
+    info!(
+        "Transcription successful: {} chars",
+        transcription.text.len()
+    );
     Ok(transcription.text)
 }
 

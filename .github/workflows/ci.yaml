@@ -1,0 +1,126 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-frontend:
+    name: Lint Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: ESLint
+        run: bun run lint
+
+      - name: TypeScript check
+        run: bun run build
+
+      - name: Prettier check
+        run: bun run format:check || echo "::warning::Format check failed - run 'bun run format' locally"
+
+  lint-backend:
+    name: Lint Backend (Rust)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+          key: "lint"
+
+      - name: Install Linux deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev libasound2-dev libopenblas-dev libx11-dev libxtst-dev libxrandr-dev
+
+      - name: Install Vulkan SDK
+        run: |
+          wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
+          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-1.3.290-noble.list https://packages.lunarg.com/vulkan/1.3.290/lunarg-vulkan-1.3.290-noble.list
+          sudo apt update
+          sudo apt install vulkan-sdk -y
+
+      - name: Rust format check
+        working-directory: src-tauri
+        run: cargo fmt -- --check
+
+      - name: Clippy
+        working-directory: src-tauri
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  test-build:
+    name: Test Build (${{ matrix.name }})
+    needs: [lint-frontend, lint-backend]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-22.04
+            name: Linux
+          - platform: macos-latest
+            name: macOS
+          - platform: windows-latest
+            name: Windows
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+          key: ${{ matrix.platform }}
+
+      - name: Install Linux deps
+        if: contains(matrix.platform, 'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libasound2-dev libopenblas-dev libx11-dev libxtst-dev libxrandr-dev
+
+      - name: Install Vulkan SDK (Windows)
+        if: contains(matrix.platform, 'windows')
+        uses: humbletim/install-vulkan-sdk@v1.2
+        with:
+          version: 1.4.309.0
+          cache: true
+
+      - name: Prepare Vulkan SDK (Linux)
+        if: contains(matrix.platform, 'ubuntu')
+        run: |
+          wget -qO- https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo tee /etc/apt/trusted.gpg.d/lunarg.asc
+          sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-1.3.290-jammy.list https://packages.lunarg.com/vulkan/1.3.290/lunarg-vulkan-1.3.290-jammy.list
+          sudo apt update
+          sudo apt install vulkan-sdk -y
+          sudo apt-get install -y mesa-vulkan-drivers
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build check (dry run)
+        env:
+          WHISPER_NO_AVX: ${{ contains(matrix.platform, 'ubuntu') && 'ON' || '' }}
+          WHISPER_NO_AVX2: ${{ contains(matrix.platform, 'ubuntu') && 'ON' || '' }}
+        run: |
+          bun run build
+          cd src-tauri && cargo check --release

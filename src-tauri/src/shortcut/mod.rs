@@ -21,8 +21,7 @@ use tauri_plugin_autostart::ManagerExt;
 
 use crate::settings::{
     self, get_settings, ClipboardHandling, KeyboardImplementation, LLMPrompt, OverlayPosition,
-    PasteMethod, ShortcutBinding, SoundTheme, APPLE_INTELLIGENCE_DEFAULT_MODEL_ID,
-    APPLE_INTELLIGENCE_PROVIDER_ID,
+    PasteMethod, ShortcutBinding, SoundTheme, APPLE_INTELLIGENCE_PROVIDER_ID,
 };
 use crate::tray;
 
@@ -263,14 +262,12 @@ pub fn change_keyboard_implementation_setting(
     settings::write_settings(&app, settings);
 
     // Initialize new implementation if needed (HandyKeys needs state)
-    if new_impl == KeyboardImplementation::HandyKeys {
-        if initialize_handy_keys_with_rollback(&app)? {
-            // Shortcuts already registered during init
-            return Ok(ImplementationChangeResult {
-                success: true,
-                reset_bindings: vec![],
-            });
-        }
+    if new_impl == KeyboardImplementation::HandyKeys && initialize_handy_keys_with_rollback(&app)? {
+        // Shortcuts already registered during init
+        return Ok(ImplementationChangeResult {
+            success: true,
+            reset_bindings: vec![],
+        });
     }
 
     // Register all shortcuts with new implementation, resetting invalid ones

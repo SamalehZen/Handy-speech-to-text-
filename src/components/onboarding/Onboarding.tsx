@@ -34,7 +34,10 @@ const ModeCard: React.FC<{
       <h3 className="text-lg font-semibold mb-4">{title}</h3>
       <div className="space-y-2 w-full">
         {benefits.map((benefit, index) => (
-          <div key={index} className="flex items-center gap-2 text-sm text-mid-gray">
+          <div
+            key={index}
+            className="flex items-center gap-2 text-sm text-mid-gray"
+          >
             {benefit.icon}
             <span>{benefit.text}</span>
           </div>
@@ -116,7 +119,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onModelSelected }) => {
       const result = await commands.getCloudSttConfig();
       if (result.status === "ok") {
         const hasApiKey = Object.values(result.data.api_keys).some(
-          (key) => key && key.trim() !== ""
+          (key) => key && key.trim() !== "",
         );
         setCloudConfigured(hasApiKey && !!result.data.active_provider);
       }
@@ -145,9 +148,18 @@ const Onboarding: React.FC<OnboardingProps> = ({ onModelSelected }) => {
               title={t("onboarding.modeSelection.offline.title")}
               icon={<Monitor className="w-8 h-8 text-mid-gray" />}
               benefits={[
-                { icon: <Lock className="w-4 h-4" />, text: t("onboarding.modeSelection.offline.benefit1") },
-                { icon: <Zap className="w-4 h-4" />, text: t("onboarding.modeSelection.offline.benefit2") },
-                { icon: <Download className="w-4 h-4" />, text: t("onboarding.modeSelection.offline.benefit3") },
+                {
+                  icon: <Lock className="w-4 h-4" />,
+                  text: t("onboarding.modeSelection.offline.benefit1"),
+                },
+                {
+                  icon: <Zap className="w-4 h-4" />,
+                  text: t("onboarding.modeSelection.offline.benefit2"),
+                },
+                {
+                  icon: <Download className="w-4 h-4" />,
+                  text: t("onboarding.modeSelection.offline.benefit3"),
+                },
               ]}
               onClick={() => setMode("offline")}
             />
@@ -155,9 +167,18 @@ const Onboarding: React.FC<OnboardingProps> = ({ onModelSelected }) => {
               title={t("onboarding.modeSelection.cloud.title")}
               icon={<Cloud className="w-8 h-8 text-logo-primary" />}
               benefits={[
-                { icon: <Zap className="w-4 h-4" />, text: t("onboarding.modeSelection.cloud.benefit1") },
-                { icon: <Download className="w-4 h-4" />, text: t("onboarding.modeSelection.cloud.benefit2") },
-                { icon: <Key className="w-4 h-4" />, text: t("onboarding.modeSelection.cloud.benefit3") },
+                {
+                  icon: <Zap className="w-4 h-4" />,
+                  text: t("onboarding.modeSelection.cloud.benefit1"),
+                },
+                {
+                  icon: <Download className="w-4 h-4" />,
+                  text: t("onboarding.modeSelection.cloud.benefit2"),
+                },
+                {
+                  icon: <Key className="w-4 h-4" />,
+                  text: t("onboarding.modeSelection.cloud.benefit3"),
+                },
               ]}
               onClick={() => setMode("cloud")}
               variant="featured"

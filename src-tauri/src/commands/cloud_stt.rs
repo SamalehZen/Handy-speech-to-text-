@@ -10,7 +10,10 @@ pub fn get_cloud_stt_providers() -> Vec<CloudSTTProvider> {
 
 #[tauri::command]
 #[specta::specta]
-pub async fn test_cloud_stt_connection(provider_id: String, api_key: String) -> Result<bool, String> {
+pub async fn test_cloud_stt_connection(
+    provider_id: String,
+    api_key: String,
+) -> Result<bool, String> {
     cloud_stt::test_connection(&provider_id, &api_key).await
 }
 
@@ -34,7 +37,11 @@ pub fn set_cloud_stt_provider(app: AppHandle, provider_id: String) -> Result<(),
 
 #[tauri::command]
 #[specta::specta]
-pub fn set_cloud_stt_api_key(app: AppHandle, provider_id: String, api_key: String) -> Result<(), String> {
+pub fn set_cloud_stt_api_key(
+    app: AppHandle,
+    provider_id: String,
+    api_key: String,
+) -> Result<(), String> {
     let mut settings = get_settings(&app);
     settings.cloud_stt_api_keys.insert(provider_id, api_key);
     write_settings(&app, settings);
@@ -43,7 +50,11 @@ pub fn set_cloud_stt_api_key(app: AppHandle, provider_id: String, api_key: Strin
 
 #[tauri::command]
 #[specta::specta]
-pub fn set_cloud_stt_model(app: AppHandle, provider_id: String, model_id: String) -> Result<(), String> {
+pub fn set_cloud_stt_model(
+    app: AppHandle,
+    provider_id: String,
+    model_id: String,
+) -> Result<(), String> {
     let mut settings = get_settings(&app);
     settings.cloud_stt_models.insert(provider_id, model_id);
     write_settings(&app, settings);
@@ -52,9 +63,7 @@ pub fn set_cloud_stt_model(app: AppHandle, provider_id: String, model_id: String
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_cloud_stt_config(
-    app: AppHandle,
-) -> Result<cloud_stt::CloudSTTConfig, String> {
+pub fn get_cloud_stt_config(app: AppHandle) -> Result<cloud_stt::CloudSTTConfig, String> {
     let settings = get_settings(&app);
     Ok(cloud_stt::CloudSTTConfig {
         enabled: settings.cloud_stt_enabled,

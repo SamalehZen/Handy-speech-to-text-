@@ -9,8 +9,10 @@
   },
   "sidebar": {
     "general": "Général",
+    "transcription": "Transcription",
     "advanced": "Avancé",
     "postProcessing": "Post-traitement",
+    "context": "Contexte",
     "history": "Historique",
     "debug": "Débogage",
     "about": "À propos"
@@ -414,6 +416,7 @@
   },
   "common": {
     "loading": "Chargement...",
+    "saving": "Enregistrement...",
     "save": "Enregistrer",
     "cancel": "Annuler",
     "reset": "Réinitialiser",
@@ -449,5 +452,40 @@
   },
   "overlay": {
     "transcribing": "Transcription..."
+  },
+  "settings": {
+    "context": {
+      "title": "Détection Contextuelle",
+      "disabledNotice": "Activez le post-traitement pour utiliser la détection contextuelle.",
+      "mappings": {
+        "title": "Applications & Sites",
+        "description": "Associez chaque application à un style de reformulation automatique.",
+        "reset": "Réinitialiser"
+      },
+      "prompts": {
+        "title": "Styles de Reformulation",
+        "description": "Personnalisez les prompts LLM pour chaque style de contexte.",
+        "selectStyle": "Sélectionner un style",
+        "styleName": "Nom du style",
+        "styleNamePlaceholder": "Ex: Email Professionnel",
+        "styleDescription": "Description",
+        "styleDescriptionPlaceholder": "Description courte du style",
+        "promptText": "Prompt LLM",
+        "promptPlaceholder": "Instructions pour le LLM...",
+        "promptTip": "Utilisez {TRANSCRIPT} pour insérer le texte transcrit.",
+        "save": "Enregistrer",
+        "reset": "Réinitialiser",
+        "resetToDefault": "Revenir aux valeurs par défaut"
+      },
+      "categories": {
+        "email": "Email",
+        "chat": "Messagerie",
+        "code": "Développement",
+        "notes": "Notes",
+        "ai": "Assistants IA",
+        "social": "Réseaux Sociaux",
+        "dev": "Outils Dev"
+      }
+    }
   }
 }

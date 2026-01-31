@@ -6,6 +6,7 @@ pub mod audio_toolkit;
 mod clipboard;
 pub mod cloud_stt;
 mod commands;
+pub mod context_detection;
 mod helpers;
 mod input;
 mod llm_client;
@@ -129,17 +130,30 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     let history_manager =
         Arc::new(HistoryManager::new(app_handle).expect("Failed to initialize history manager"));
 
+    // Initialize the browser bridge for context detection
+    let browser_bridge = Arc::new(tokio::sync::RwLock::new(
+        context_detection::browser_bridge::BrowserBridge::default(),
+    ));
+    let bridge_clone = browser_bridge.clone();
+    tauri::async_runtime::spawn(async move {
+        let bridge = bridge_clone.read().await;
+        if let Err(e) = bridge.start().await {
+            log::error!("Failed to start browser bridge: {}", e);
+        }
+    });
+
     // Add managers to Tauri's managed state
     app_handle.manage(recording_manager.clone());
     app_handle.manage(model_manager.clone());
     app_handle.manage(transcription_manager.clone());
     app_handle.manage(history_manager.clone());
+    app_handle.manage(browser_bridge);
 
     // Initialize the shortcuts
     shortcut::init_shortcuts(app_handle);
 
     #[cfg(unix)]
-    let signals = Signals::new(&[SIGUSR2]).unwrap();
+    let signals = Signals::new([SIGUSR2]).unwrap();
     // Set up SIGUSR2 signal handler for toggling transcription
     #[cfg(unix)]
     signal_handle::setup_signal_handler(app_handle.clone(), signals);
@@ -204,7 +218,7 @@ fn initialize_core_logic(app_handle: &AppHandle) {
 
     // Get the autostart manager and configure based on user setting
     let autostart_manager = app_handle.autolaunch();
-    let settings = settings::get_settings(&app_handle);
+    let settings = settings::get_settings(app_handle);
 
     if settings.autostart_enabled {
         // Enable autostart if user has opted in
@@ -327,6 +341,16 @@ pub fn run() {
         commands::cloud_stt::set_cloud_stt_api_key,
         commands::cloud_stt::set_cloud_stt_model,
         commands::cloud_stt::get_cloud_stt_config,
+        commands::context::get_context_style_prompts,
+        commands::context::update_context_style_prompt,
+        commands::context::reset_context_style_prompt,
+        commands::context::get_context_mappings,
+        commands::context::update_context_mapping,
+        commands::context::delete_context_mapping,
+        commands::context::get_current_context,
+        commands::context::get_browser_bridge_status,
+        commands::context::add_context_style_prompt,
+        commands::context::delete_context_style_prompt,
         helpers::clamshell::is_laptop,
     ]);
 
@@ -338,6 +362,7 @@ pub fn run() {
         )
         .expect("Failed to export typescript bindings");
 
+    #[allow(unused_mut)]
     let mut builder = tauri::Builder::default().plugin(
         LogBuilder::new()
             .level(log::LevelFilter::Trace) // Set to most verbose level globally
@@ -386,7 +411,7 @@ pub fn run() {
         ))
         .manage(Mutex::new(ShortcutToggleStates::default()))
         .setup(move |app| {
-            let settings = get_settings(&app.handle());
+            let settings = get_settings(app.handle());
             let tauri_log_level: tauri_plugin_log::LogLevel = settings.log_level.into();
             let file_log_level: log::Level = tauri_log_level.into();
             // Store the file log level in the atomic for the filter to use
@@ -422,7 +447,7 @@ pub fn run() {
             tauri::WindowEvent::ThemeChanged(theme) => {
                 log::info!("Theme changed to: {:?}", theme);
                 // Update tray icon to match new theme, maintaining idle state
-                utils::change_tray_icon(&window.app_handle(), utils::TrayIconState::Idle);
+                utils::change_tray_icon(window.app_handle(), utils::TrayIconState::Idle);
             }
             _ => {}
         })
