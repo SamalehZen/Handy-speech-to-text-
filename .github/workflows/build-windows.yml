@@ -49,10 +49,21 @@ jobs:
       - name: Install frontend dependencies
         run: bun install
 
+      - name: Remove signing config for unsigned build
+        shell: pwsh
+        run: |
+          $conf = Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json
+          if ($conf.bundle.windows.PSObject.Properties['signCommand']) {
+            $conf.bundle.windows.PSObject.Properties.Remove('signCommand')
+          }
+          $conf | ConvertTo-Json -Depth 20 | Set-Content src-tauri/tauri.conf.json
+          Write-Host "Removed signCommand from tauri.conf.json"
+
       - name: Build with Tauri
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ""
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
