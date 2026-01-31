@@ -1,4 +1,5 @@
-#[cfg(target_os = "macos")]\nuse log::debug;
+#[cfg(target_os = "macos")]
+use log::debug;
 
 #[cfg(target_os = "windows")]
 use std::ffi::OsString;
