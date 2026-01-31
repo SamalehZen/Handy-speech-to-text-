@@ -25,7 +25,8 @@ const RecordingOverlay: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [state, setState] = useState<OverlayState>("recording");
   const [levels, setLevels] = useState<number[]>(Array(16).fill(0));
-  const [detectedContext, setDetectedContext] = useState<DetectedContext | null>(null);
+  const [detectedContext, setDetectedContext] =
+    useState<DetectedContext | null>(null);
   const smoothedLevelsRef = useRef<number[]>(Array(16).fill(0));
 
   useEffect(() => {
@@ -46,9 +47,12 @@ const RecordingOverlay: React.FC = () => {
       });
 
       // Listen for context detection
-      const unlistenContext = await listen<DetectedContext>("context-detected", (event) => {
-        setDetectedContext(event.payload);
-      });
+      const unlistenContext = await listen<DetectedContext>(
+        "context-detected",
+        (event) => {
+          setDetectedContext(event.payload);
+        },
+      );
 
       // Listen for mic-level updates
       const unlistenLevel = await listen<number[]>("mic-level", (event) => {
@@ -111,7 +115,9 @@ const RecordingOverlay: React.FC = () => {
               <div className="context-indicator">
                 <span className="context-app">{detectedContext.app_name}</span>
                 <span className="context-arrow">→</span>
-                <span className="context-style">{detectedContext.context_style}</span>
+                <span className="context-style">
+                  {detectedContext.context_style}
+                </span>
               </div>
             )}
           </div>

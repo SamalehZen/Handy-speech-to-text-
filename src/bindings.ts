@@ -677,6 +677,62 @@ async isLaptop() : Promise<Result<boolean, string>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+async getCloudSttProviders() : Promise<Result<CloudSTTProvider[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_cloud_stt_providers") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async getCloudSttConfig() : Promise<Result<CloudSTTConfig, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_cloud_stt_config") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setCloudSttEnabled(enabled: boolean) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_cloud_stt_enabled", { enabled }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setCloudSttProvider(providerId: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_cloud_stt_provider", { providerId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setCloudSttApiKey(providerId: string, apiKey: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_cloud_stt_api_key", { providerId, apiKey }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setCloudSttModel(providerId: string, modelId: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_cloud_stt_model", { providerId, modelId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async testCloudSttConnection(providerId: string, apiKey: string) : Promise<Result<boolean, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("test_cloud_stt_connection", { providerId, apiKey }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 }
 }
 
@@ -717,6 +773,10 @@ export type PostProcessProvider = { id: string; label: string; base_url: string;
 export type RecordingRetentionPeriod = "never" | "preserve_limit" | "days_3" | "weeks_2" | "months_3"
 export type ShortcutBinding = { id: string; name: string; description: string; default_binding: string; current_binding: string }
 export type SoundTheme = "marimba" | "pop" | "custom"
+export type CloudSTTProviderId = "openai" | "gemini"
+export type CloudSTTModel = { id: string; name: string; description: string }
+export type CloudSTTProvider = { id: CloudSTTProviderId; label: string; description: string; base_url: string; models: CloudSTTModel[]; default_model: string; api_key_url: string }
+export type CloudSTTConfig = { enabled: boolean; active_provider: string | null; api_keys: Partial<{ [key in string]: string }>; selected_models: Partial<{ [key in string]: string }> }
 
 /** tauri-specta globals **/
 

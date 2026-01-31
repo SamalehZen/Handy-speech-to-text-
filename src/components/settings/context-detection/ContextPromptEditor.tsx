@@ -70,7 +70,7 @@ export const ContextPromptEditor: React.FC = () => {
         selectedPromptId,
         draftName.trim() || null,
         draftDescription.trim() || null,
-        draftPrompt.trim() || null
+        draftPrompt.trim() || null,
       );
       if (result.status === "ok") {
         await loadPrompts();
@@ -87,7 +87,9 @@ export const ContextPromptEditor: React.FC = () => {
 
     setIsSaving(true);
     try {
-      const result = await (commands as any).resetContextStylePrompt(selectedPromptId);
+      const result = await (commands as any).resetContextStylePrompt(
+        selectedPromptId,
+      );
       if (result.status === "ok") {
         await loadPrompts();
       }
@@ -105,9 +107,7 @@ export const ContextPromptEditor: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="p-4 text-center text-mid-gray">
-        {t("common.loading")}
-      </div>
+      <div className="p-4 text-center text-mid-gray">{t("common.loading")}</div>
     );
   }
 
@@ -160,7 +160,7 @@ export const ContextPromptEditor: React.FC = () => {
               value={draftDescription}
               onChange={(e) => setDraftDescription(e.target.value)}
               placeholder={t(
-                "settings.context.prompts.styleDescriptionPlaceholder"
+                "settings.context.prompts.styleDescriptionPlaceholder",
               )}
               variant="compact"
               className="w-full"

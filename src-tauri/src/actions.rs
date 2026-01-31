@@ -3,7 +3,6 @@ use crate::apple_intelligence;
 use crate::audio_feedback::{play_feedback_sound, play_feedback_sound_blocking, SoundType};
 use crate::cloud_stt;
 use crate::context_detection::context_resolver::ContextResolver;
-use crate::context_detection::DetectedContext;
 use crate::managers::audio::AudioRecordingManager;
 use crate::managers::history::HistoryManager;
 use crate::managers::transcription::TranscriptionManager;
@@ -146,11 +145,8 @@ async fn maybe_post_process_transcription(
     {
         Ok(Some(content)) => {
             // Strip invisible Unicode characters that some LLMs (e.g., Qwen) may insert
-            let content = content
-                .replace('\u{200B}', "") // Zero-Width Space
-                .replace('\u{200C}', "") // Zero-Width Non-Joiner
-                .replace('\u{200D}', "") // Zero-Width Joiner
-                .replace('\u{FEFF}', ""); // Byte Order Mark / Zero-Width No-Break Space
+            let content =
+                content.replace(&['\u{200B}', '\u{200C}', '\u{200D}', '\u{FEFF}'][..], "");
             debug!(
                 "LLM post-processing succeeded for provider '{}'. Output length: {} chars",
                 provider.id,
@@ -291,11 +287,8 @@ async fn maybe_post_process_with_context_prompt(
         .await
     {
         Ok(Some(content)) => {
-            let content = content
-                .replace('\u{200B}', "")
-                .replace('\u{200C}', "")
-                .replace('\u{200D}', "")
-                .replace('\u{FEFF}', "");
+            let content =
+                content.replace(&['\u{200B}', '\u{200C}', '\u{200D}', '\u{FEFF}'][..], "");
             debug!(
                 "Context-aware LLM post-processing succeeded for provider '{}'. Output length: {} chars",
                 provider.id,
@@ -642,7 +635,10 @@ impl ShortcutAction for TranscribeWithContextAction {
         shortcut::unregister_cancel_shortcut(app);
 
         let stop_time = Instant::now();
-        debug!("TranscribeWithContextAction::stop called for binding: {}", binding_id);
+        debug!(
+            "TranscribeWithContextAction::stop called for binding: {}",
+            binding_id
+        );
 
         let ah = app.clone();
         let rm = Arc::clone(&app.state::<Arc<AudioRecordingManager>>());
@@ -679,7 +675,9 @@ impl ShortcutAction for TranscribeWithContextAction {
 
                 info!(
                     "Context detected: {} ({}) -> style: {}",
-                    detected_context.app_name, detected_context.app_id, detected_context.context_style
+                    detected_context.app_name,
+                    detected_context.app_id,
+                    detected_context.context_style
                 );
 
                 if let Some(overlay_window) = ah.get_webview_window("recording_overlay") {
@@ -706,7 +704,7 @@ impl ShortcutAction for TranscribeWithContextAction {
                         if !transcription.is_empty() {
                             let mut final_text = transcription.clone();
                             let mut post_processed_text: Option<String> = None;
-                            let mut post_process_prompt: Option<String> = context_prompt.clone();
+                            let post_process_prompt: Option<String> = context_prompt.clone();
 
                             if let Some(converted_text) =
                                 maybe_convert_chinese_variant(&settings, &transcription).await
@@ -714,8 +712,12 @@ impl ShortcutAction for TranscribeWithContextAction {
                                 final_text = converted_text;
                             }
 
-                            if let Some(processed_text) =
-                                maybe_post_process_with_context_prompt(&settings, &final_text, context_prompt).await
+                            if let Some(processed_text) = maybe_post_process_with_context_prompt(
+                                &settings,
+                                &final_text,
+                                context_prompt,
+                            )
+                            .await
                             {
                                 post_processed_text = Some(processed_text.clone());
                                 final_text = processed_text;
@@ -741,7 +743,7 @@ impl ShortcutAction for TranscribeWithContextAction {
 
                             let ah_clone = ah.clone();
                             let paste_time = Instant::now();
-                            ah.run_on_main_thread(move || {
+                            let _ = ah.run_on_main_thread(move || {
                                 match utils::paste(final_text, ah_clone.clone()) {
                                     Ok(()) => debug!(
                                         "Text pasted successfully in {:?}",

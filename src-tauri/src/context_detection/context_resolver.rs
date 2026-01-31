@@ -90,7 +90,11 @@ impl ContextResolver {
     }
 
     fn get_context_style(&self, app_id: &str, settings: &AppSettings) -> Option<String> {
-        if let Some(mapping) = settings.context_mappings.iter().find(|m| m.app_id == app_id) {
+        if let Some(mapping) = settings
+            .context_mappings
+            .iter()
+            .find(|m| m.app_id == app_id)
+        {
             return Some(mapping.context_style.clone());
         }
 

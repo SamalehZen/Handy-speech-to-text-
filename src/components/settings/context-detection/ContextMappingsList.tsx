@@ -84,7 +84,10 @@ export const ContextMappingsList: React.FC = () => {
 
   const handleStyleChange = async (appId: string, newStyle: string) => {
     try {
-      const result = await (commands as any).updateContextMapping(appId, newStyle);
+      const result = await (commands as any).updateContextMapping(
+        appId,
+        newStyle,
+      );
       if (result.status === "ok") {
         await loadData();
       }
@@ -117,9 +120,7 @@ export const ContextMappingsList: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="p-4 text-center text-mid-gray">
-        {t("common.loading")}
-      </div>
+      <div className="p-4 text-center text-mid-gray">{t("common.loading")}</div>
     );
   }
 

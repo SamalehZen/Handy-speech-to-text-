@@ -1,3 +1,4 @@
+#[cfg(target_os = "macos")]
 use log::debug;
 
 #[cfg(target_os = "windows")]
@@ -11,16 +12,17 @@ use std::process::Command;
 #[cfg(target_os = "windows")]
 pub fn get_active_window_info() -> Option<(String, String)> {
     use windows::Win32::Foundation::HWND;
+    use windows::Win32::System::Threading::{
+        OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_FORMAT,
+        PROCESS_QUERY_LIMITED_INFORMATION,
+    };
     use windows::Win32::UI::WindowsAndMessaging::{
         GetForegroundWindow, GetWindowTextW, GetWindowThreadProcessId,
-    };
-    use windows::Win32::System::Threading::{
-        OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_FORMAT, PROCESS_QUERY_LIMITED_INFORMATION,
     };
 
     unsafe {
         let hwnd: HWND = GetForegroundWindow();
-        if hwnd.0 .is_null() {
+        if hwnd.0.is_null() {
             return None;
         }
 
@@ -39,7 +41,14 @@ pub fn get_active_window_info() -> Option<(String, String)> {
             if let Ok(handle) = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, process_id) {
                 let mut name = [0u16; 512];
                 let mut size = name.len() as u32;
-                if QueryFullProcessImageNameW(handle, PROCESS_NAME_FORMAT(0), windows::core::PWSTR(name.as_mut_ptr()), &mut size).is_ok() {
+                if QueryFullProcessImageNameW(
+                    handle,
+                    PROCESS_NAME_FORMAT(0),
+                    windows::core::PWSTR(name.as_mut_ptr()),
+                    &mut size,
+                )
+                .is_ok()
+                {
                     let path = OsString::from_wide(&name[..size as usize]);
                     let path_str = path.to_string_lossy();
                     path_str
@@ -85,7 +94,10 @@ pub fn get_active_window_info() -> Option<(String, String)> {
         .ok()?;
 
     if !output.status.success() {
-        debug!("osascript failed: {:?}", String::from_utf8_lossy(&output.stderr));
+        debug!(
+            "osascript failed: {:?}",
+            String::from_utf8_lossy(&output.stderr)
+        );
         return None;
     }
 
@@ -123,7 +135,9 @@ pub fn get_active_window_info() -> Option<(String, String)> {
         .ok()?;
 
     let process_name = if pid_output.status.success() {
-        let pid = String::from_utf8_lossy(&pid_output.stdout).trim().to_string();
+        let pid = String::from_utf8_lossy(&pid_output.stdout)
+            .trim()
+            .to_string();
         if let Ok(cmdline) = std::fs::read_to_string(format!("/proc/{}/comm", pid)) {
             cmdline.trim().to_string()
         } else {
@@ -220,7 +234,11 @@ fn identify_from_browser_title(title: &str) -> Option<String> {
     if title.contains("linkedin") {
         return Some("linkedin".to_string());
     }
-    if title.contains("twitter") || title.contains(" x ") || title.contains("x.com") || title.contains("/ x") {
+    if title.contains("twitter")
+        || title.contains(" x ")
+        || title.contains("x.com")
+        || title.contains("/ x")
+    {
         return Some("twitter".to_string());
     }
     if title.contains("github") {

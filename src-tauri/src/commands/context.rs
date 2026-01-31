@@ -1,7 +1,7 @@
 use crate::context_detection::{browser_bridge::BrowserBridge, DetectedContext};
 use crate::settings::{get_settings, write_settings, ContextMapping, ContextStylePrompt};
 use std::sync::Arc;
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, State};
 use tokio::sync::RwLock;
 
 pub type BrowserBridgeState = Arc<RwLock<BrowserBridge>>;
@@ -176,9 +176,7 @@ pub fn delete_context_style_prompt(app: AppHandle, prompt_id: String) -> Result<
         }
     }
 
-    settings
-        .context_style_prompts
-        .retain(|p| p.id != prompt_id);
+    settings.context_style_prompts.retain(|p| p.id != prompt_id);
     write_settings(&app, settings);
     Ok(())
 }
