@@ -12,7 +12,8 @@
     "postProcessing": "Postproces",
     "history": "Historia",
     "debug": "Debugowanie",
-    "about": "O programie"
+    "about": "O programie",
+    "context": "Kontekst"
   },
   "onboarding": {
     "subtitle": "Aby rozpocząć, wybierz model transkrypcji",
@@ -413,6 +414,7 @@
   },
   "common": {
     "loading": "Wczytywanie...",
+    "saving": "Zapisywanie...",
     "save": "Zapisz",
     "cancel": "Anuluj",
     "reset": "Resetuj",

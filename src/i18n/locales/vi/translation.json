@@ -13,7 +13,8 @@
     "postProcessing": "Xử lý sau",
     "history": "Lịch sử",
     "debug": "Gỡ lỗi",
-    "about": "Giới thiệu"
+    "about": "Giới thiệu",
+    "context": "Ngữ cảnh"
   },
   "onboarding": {
     "subtitle": "Để bắt đầu, hãy chọn một mô hình chuyển đổi giọng nói",
@@ -414,6 +415,7 @@
   },
   "common": {
     "loading": "Đang tải...",
+    "saving": "Đang lưu...",
     "save": "Lưu",
     "cancel": "Hủy",
     "reset": "Đặt lại",

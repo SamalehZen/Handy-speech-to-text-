@@ -19,6 +19,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
 use tauri::AppHandle;
+use tauri::Emitter;
 use tauri::Manager;
 
 // Shortcut Action Trait
@@ -680,6 +681,10 @@ impl ShortcutAction for TranscribeWithContextAction {
                     "Context detected: {} ({}) -> style: {}",
                     detected_context.app_name, detected_context.app_id, detected_context.context_style
                 );
+
+                if let Some(overlay_window) = ah.get_webview_window("recording_overlay") {
+                    let _ = overlay_window.emit("context-detected", &detected_context);
+                }
 
                 let context_prompt = settings
                     .context_style_prompts
