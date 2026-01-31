@@ -458,15 +458,11 @@ impl ModelManager {
 
         // Download with progress
         while let Some(chunk) = stream.next().await {
-            let chunk = chunk.map_err(|e| {
-                // Mark as not downloading on error
-                {
-                    let mut models = self.available_models.lock().unwrap();
-                    if let Some(model) = models.get_mut(model_id) {
-                        model.is_downloading = false;
-                    }
+            let chunk = chunk.inspect_err(|_| {
+                let mut models = self.available_models.lock().unwrap();
+                if let Some(model) = models.get_mut(model_id) {
+                    model.is_downloading = false;
                 }
-                e
             })?;
 
             file.write_all(&chunk)?;

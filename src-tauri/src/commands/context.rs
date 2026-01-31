@@ -1,7 +1,7 @@
 use crate::context_detection::{browser_bridge::BrowserBridge, DetectedContext};
 use crate::settings::{get_settings, write_settings, ContextMapping, ContextStylePrompt};
 use std::sync::Arc;
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, State};
 use tokio::sync::RwLock;
 
 pub type BrowserBridgeState = Arc<RwLock<BrowserBridge>>;

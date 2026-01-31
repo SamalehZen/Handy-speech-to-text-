@@ -3,7 +3,6 @@ use crate::apple_intelligence;
 use crate::audio_feedback::{play_feedback_sound, play_feedback_sound_blocking, SoundType};
 use crate::cloud_stt;
 use crate::context_detection::context_resolver::ContextResolver;
-use crate::context_detection::DetectedContext;
 use crate::managers::audio::AudioRecordingManager;
 use crate::managers::history::HistoryManager;
 use crate::managers::transcription::TranscriptionManager;
@@ -147,10 +146,7 @@ async fn maybe_post_process_transcription(
         Ok(Some(content)) => {
             // Strip invisible Unicode characters that some LLMs (e.g., Qwen) may insert
             let content = content
-                .replace('\u{200B}', "") // Zero-Width Space
-                .replace('\u{200C}', "") // Zero-Width Non-Joiner
-                .replace('\u{200D}', "") // Zero-Width Joiner
-                .replace('\u{FEFF}', ""); // Byte Order Mark / Zero-Width No-Break Space
+                .replace(&['\u{200B}', '\u{200C}', '\u{200D}', '\u{FEFF}'][..], "");
             debug!(
                 "LLM post-processing succeeded for provider '{}'. Output length: {} chars",
                 provider.id,
@@ -292,10 +288,7 @@ async fn maybe_post_process_with_context_prompt(
     {
         Ok(Some(content)) => {
             let content = content
-                .replace('\u{200B}', "")
-                .replace('\u{200C}', "")
-                .replace('\u{200D}', "")
-                .replace('\u{FEFF}', "");
+                .replace(&['\u{200B}', '\u{200C}', '\u{200D}', '\u{FEFF}'][..], "");
             debug!(
                 "Context-aware LLM post-processing succeeded for provider '{}'. Output length: {} chars",
                 provider.id,
@@ -531,7 +524,7 @@ impl ShortcutAction for TranscribeAction {
                         if !transcription.is_empty() {
                             let mut final_text = transcription.clone();
                             let mut post_processed_text: Option<String> = None;
-                            let mut post_process_prompt: Option<String> = None;
+                            let post_process_prompt: Option<String>;
 
                             // First, check if Chinese variant conversion is needed
                             if let Some(converted_text) =
@@ -583,7 +576,7 @@ impl ShortcutAction for TranscribeAction {
                             // Paste the final text (either processed or original)
                             let ah_clone = ah.clone();
                             let paste_time = Instant::now();
-                            ah.run_on_main_thread(move || {
+                            let _ = ah.run_on_main_thread(move || {
                                 match utils::paste(final_text, ah_clone.clone()) {
                                     Ok(()) => debug!(
                                         "Text pasted successfully in {:?}",
@@ -750,7 +743,7 @@ impl ShortcutAction for TranscribeWithContextAction {
 
                             let ah_clone = ah.clone();
                             let paste_time = Instant::now();
-                            ah.run_on_main_thread(move || {
+                            let _ = ah.run_on_main_thread(move || {
                                 match utils::paste(final_text, ah_clone.clone()) {
                                     Ok(()) => debug!(
                                         "Text pasted successfully in {:?}",

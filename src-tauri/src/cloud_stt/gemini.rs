@@ -54,6 +54,7 @@ struct GeminiResponsePart {
 struct GeminiError {
     message: String,
     status: Option<String>,
+    #[allow(dead_code)]
     code: Option<i32>,
 }
 

@@ -21,6 +21,7 @@ struct OpenAIErrorResponse {
 struct OpenAIError {
     message: String,
     #[serde(rename = "type")]
+    #[allow(dead_code)]
     error_type: Option<String>,
     code: Option<String>,
 }
