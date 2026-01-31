@@ -11,8 +11,8 @@ pub fn f32_to_wav_bytes(samples: &[f32], sample_rate: u32) -> Result<Vec<u8>, St
     };
 
     let mut cursor = Cursor::new(Vec::new());
-    let mut writer =
-        WavWriter::new(&mut cursor, spec).map_err(|e| format!("Failed to create WAV writer: {}", e))?;
+    let mut writer = WavWriter::new(&mut cursor, spec)
+        .map_err(|e| format!("Failed to create WAV writer: {}", e))?;
 
     for &sample in samples {
         let sample_i16 = (sample * 32767.0).clamp(-32768.0, 32767.0) as i16;

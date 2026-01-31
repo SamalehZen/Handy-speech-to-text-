@@ -509,7 +509,9 @@ fn default_model_for_provider(provider_id: &str) -> String {
         "anthropic" => "claude-3-5-sonnet-20241022".to_string(),
         "groq" => "llama-3.3-70b-versatile".to_string(),
         "cerebras" => "llama-3.3-70b".to_string(),
-        id if id == APPLE_INTELLIGENCE_PROVIDER_ID => APPLE_INTELLIGENCE_DEFAULT_MODEL_ID.to_string(),
+        id if id == APPLE_INTELLIGENCE_PROVIDER_ID => {
+            APPLE_INTELLIGENCE_DEFAULT_MODEL_ID.to_string()
+        }
         _ => String::new(),
     }
 }

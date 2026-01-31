@@ -642,7 +642,10 @@ impl ShortcutAction for TranscribeWithContextAction {
         shortcut::unregister_cancel_shortcut(app);
 
         let stop_time = Instant::now();
-        debug!("TranscribeWithContextAction::stop called for binding: {}", binding_id);
+        debug!(
+            "TranscribeWithContextAction::stop called for binding: {}",
+            binding_id
+        );
 
         let ah = app.clone();
         let rm = Arc::clone(&app.state::<Arc<AudioRecordingManager>>());
@@ -679,7 +682,9 @@ impl ShortcutAction for TranscribeWithContextAction {
 
                 info!(
                     "Context detected: {} ({}) -> style: {}",
-                    detected_context.app_name, detected_context.app_id, detected_context.context_style
+                    detected_context.app_name,
+                    detected_context.app_id,
+                    detected_context.context_style
                 );
 
                 if let Some(overlay_window) = ah.get_webview_window("recording_overlay") {
@@ -714,8 +719,12 @@ impl ShortcutAction for TranscribeWithContextAction {
                                 final_text = converted_text;
                             }
 
-                            if let Some(processed_text) =
-                                maybe_post_process_with_context_prompt(&settings, &final_text, context_prompt).await
+                            if let Some(processed_text) = maybe_post_process_with_context_prompt(
+                                &settings,
+                                &final_text,
+                                context_prompt,
+                            )
+                            .await
                             {
                                 post_processed_text = Some(processed_text.clone());
                                 final_text = processed_text;

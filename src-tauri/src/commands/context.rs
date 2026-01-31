@@ -176,9 +176,7 @@ pub fn delete_context_style_prompt(app: AppHandle, prompt_id: String) -> Result<
         }
     }
 
-    settings
-        .context_style_prompts
-        .retain(|p| p.id != prompt_id);
+    settings.context_style_prompts.retain(|p| p.id != prompt_id);
     write_settings(&app, settings);
     Ok(())
 }
