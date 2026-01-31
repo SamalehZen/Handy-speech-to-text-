@@ -80,7 +80,7 @@ Handy follows a clean architecture pattern:
 - `hooks/` - Reusable React hooks
 - `lib/types.ts` - Shared TypeScript types
 
-For more details, see the Architecture section in [README.md](README.md) or [AGENTS.md](AGENTS.md).
+For more details, see the Architecture section in [README.md](README.md) or [AGENTS.md](AGENTS.md). For coding standards and conventions, refer to [GUIDELINES.md](GUIDELINES.md).
 
 ## 🐛 Reporting Bugs
 
@@ -233,6 +233,8 @@ In your PR description, please include:
 - How extensively it was used (e.g., "generated boilerplate", "helped debug", "wrote most of the code")
 
 ### Code Style Guidelines
+
+For comprehensive coding standards, see [GUIDELINES.md](GUIDELINES.md).
 
 **Rust:**
 
