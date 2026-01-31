@@ -4,6 +4,7 @@ mod apple_intelligence;
 mod audio_feedback;
 pub mod audio_toolkit;
 mod clipboard;
+pub mod cloud_stt;
 mod commands;
 mod helpers;
 mod input;
@@ -319,6 +320,13 @@ pub fn run() {
         commands::history::delete_history_entry,
         commands::history::update_history_limit,
         commands::history::update_recording_retention_period,
+        commands::cloud_stt::get_cloud_stt_providers,
+        commands::cloud_stt::test_cloud_stt_connection,
+        commands::cloud_stt::set_cloud_stt_enabled,
+        commands::cloud_stt::set_cloud_stt_provider,
+        commands::cloud_stt::set_cloud_stt_api_key,
+        commands::cloud_stt::set_cloud_stt_model,
+        commands::cloud_stt::get_cloud_stt_config,
         helpers::clamshell::is_laptop,
     ]);
 
